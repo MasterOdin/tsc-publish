@@ -1,4 +1,7 @@
 # typescript-publish
+
+[![Build Status](https://travis-ci.com/MasterOdin/tsc-publish.svg?branch=master)](https://travis-ci.com/MasterOdin/tsc-publish)
+
 Utility package to handle publishing standard TypeScript packages.
 
 This utility helps to ensure that various steps are run before publishing as well to aim to create a minimal
