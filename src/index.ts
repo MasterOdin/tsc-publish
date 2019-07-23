@@ -1,15 +1,19 @@
 #!/usr/bin/env node
 
 import fs from 'fs';
-import {exec} from 'child_process';
+import {spawn} from 'child_process';
 import {resolve} from 'path';
 import program from 'commander';
+import colors from 'ansi-colors';
 
-interface PackageJson {
+import {modifyPackageJson} from './utils';
+
+export interface PackageJson {
   name?: string;
   scripts?: {[key: string]: string};
   dependencies?: {[key: string]: string};
   devDependencies?: {[key: string]: string};
+  bin?: {[key: string]: string};
   main?: string;
   types?: string;
 }
@@ -21,48 +25,49 @@ interface TsconfigJson {
 }
 
 interface Command {
-  describe(): string;
-  execute(): Promise<void>; 
+  describe(): void;
+  execute(): Promise<number>; 
 }
 
 class ExecCommand implements Command {
   public command: string;
+  public args: string[];
   public cwd: string;
-  public constructor(command: string, cwd: string) {
-    this.command = command;
+
+  public constructor(cwd: string, command: string, args: string[] = []) {
     this.cwd = cwd;
+    this.command = command;
+    this.args = args;
   }
 
-  public describe(): string {
-    return `ExecCommand - ${this.command}`;
+  public describe(): void {
+    console.log('> ExecCommand');
+    console.log(`>   ${colors.cyan(`${this.command} ${this.args.join(' ')}`)}`);
   }
 
-  public execute(): Promise<void> {
+  public execute(): Promise<number> {
     return new Promise((resolve: any, reject: any): void => {
-      let opts = {
-        cwd: this.cwd,
-        encoding: 'utf8'
-      };
-      let execCommand = exec(this.command, opts, (err): void => {
-        if (err) {
-          reject(new Error(err.message));
-        }
-        resolve();
-      });
-  
-      if (execCommand.stdout) {
-        execCommand.stdout.on('data', (data): void => console.log(data));
-      }
-      if (execCommand.stderr) {
-        execCommand.stderr.on('data', (data): void => console.error(data));
-      }  
+      spawn(this.command, this.args, {
+        stdio: 'inherit',
+        cwd: this.cwd
+      }).on('error', (err): void => reject(err))
+        .on('exit', (code: number): void => resolve(code));
     });
   }
 }
 
 class NpmCommand extends ExecCommand {
-  public constructor(command: string, cwd: string) {
-    super(`npm run ${command}`, cwd);
+  public constructor(cwd: string, command: string[] | string) {
+    if (typeof command === 'string') {
+      command = [command];
+    }
+    super(cwd, 'npm', command);
+  }
+}
+
+class NpmRunCommand extends NpmCommand {
+  public constructor(cwd: string, command: string, args: string[] = []) {
+    super(cwd, ['run', command].concat(args));
   }
 }
 
@@ -80,35 +85,39 @@ class CopyCommand implements Command {
     }*/
   }
 
-  public describe(): string {
-    return `CopyCommand '${this.src}' -> '${this.dest}'`;
+  public describe(): void {
+    console.log('> CopyCommand');
+    console.log(`>   ${colors.cyan(this.src)}`);
+    console.log(`>   ${colors.cyan(this.dest)}`);
   }
 
-  public async execute(): Promise<void> {
+  public async execute(): Promise<number> {
     fs.copyFileSync(this.src, this.dest);
+    return 0;
   }
 }
 
 async function runCommands(commands: Command[]): Promise<void> {
   for (let command of commands) {
-    console.log(`== RUNNING COMMAND ${command.describe()} == `);
+    console.log('> Running Command');
+    command.describe();
     try {
-      await command.execute();
+      let code = await command.execute();
+      if (code !== 0) {
+        throw new Error('Error encountered running last command');
+      }
+      console.log(`> ${colors.green('DONE')}\n`);
     }
     catch (exc) {
-      //console.error(exc);
+      throw exc;
     }
   }
-  return;
 }
 
 program.version('0.0.1');
 
 program
-  .option('-v, --verbose', 'verbose output')
-  .option('--bugfix', 'increment bugfix version')
-  .option('--minor', 'increment minor version')
-  .option('--major', 'increment major version');
+  .option('--dry-run', 'Do a dry-run of tsc-publish without publishing');
 
 program.parse(process.argv);
 
@@ -130,7 +139,17 @@ let commands = [];
 if (packageJson.scripts) {
   for (let script of ['lint', 'tslint', 'eslint', 'tslint:check', 'eslint:check']) {
     if (packageJson.scripts[script]) {
-      commands.push(new NpmCommand(script, cwd));
+      commands.push(new NpmRunCommand(cwd, script));
+      break;
+    }
+  }
+}
+
+// Find test action
+if (packageJson.scripts) {
+  for (let script of ['test']) {
+    if (packageJson.scripts[script]) {
+      commands.push(new NpmRunCommand(cwd, script));
       break;
     }
   }
@@ -141,7 +160,7 @@ let buildStepFound = false;
 if (packageJson.scripts) {
   for (let script of ['build', 'build_all']) {
     if (packageJson.scripts[script]) {
-      commands.push(new NpmCommand(script, cwd));
+      commands.push(new NpmRunCommand(cwd, script));
       buildStepFound = true;
       break;
     }
@@ -152,26 +171,16 @@ if (!buildStepFound) {
   let inDev = packageJson.devDependencies && packageJson.devDependencies['typescript'];
   let inDeps = packageJson.dependencies && packageJson.dependencies['typescript'];
   if (inDev || inDeps) {
-    commands.push(new ExecCommand('./node_modules/bin/tsc', cwd));
+    commands.push(new ExecCommand(cwd, './node_modules/bin/tsc'));
     buildStepFound = true;
   }
 }
 
+// TODO: check if tsc is installed in path
+
 if (!buildStepFound) {
   throw new Error('No build step found');
 }
-
-/*
-// Find any potential test steps
-if (packageJson.scripts) {
-  for (let script of ['test']) {
-    if (packageJson.scripts[script]) {
-      commands.push(new NpmCommand(script, cwd));
-      break;
-    }
-  }
-}
-*/
 
 for (let file_name of ['README.md', 'README', 'LICENSE.md', 'LICENSE']) {
   if (fs.existsSync(resolve(cwd, file_name))) {
@@ -183,17 +192,19 @@ for (let file_name of ['README.md', 'README', 'LICENSE.md', 'LICENSE']) {
 }
 
 runCommands(commands).then((): void => {
-  console.log("== FINISHED COMMANDS ==");
+  console.log('> Finished All Commands');
   if (tsconfig && tsconfig.compilerOptions && tsconfig.compilerOptions.outDir) {
-    let outDir = tsconfig.compilerOptions.outDir;
-    if (packageJson.main) {
-      packageJson.main = packageJson.main.replace(outDir, '').replace(/^[\.\/|\/]/, '');
-    }
-    if (packageJson.types) {
-      packageJson.types = packageJson.types.replace(outDir, '').replace(/^[\.\/|\/]/, '');
-    }
-
-    delete packageJson.devDependencies;
+    console.log(`> Copying and fixing package.json into ${tsconfig.compilerOptions.outDir}`);
+    packageJson = modifyPackageJson(packageJson, tsconfig.compilerOptions.outDir);
+    console.log('done');
     fs.writeFileSync(resolve(tsconfig.compilerOptions.outDir, 'package.json'), JSON.stringify(packageJson, null, 2));
   }
+
+  if (program.dryRun) {
+    console.log();
+    console.log(`> ${colors.yellow('Dry-run enabled, not running npm-publish')}`);
+  }
+}).catch((err): void => {
+  console.log();
+  console.error(`${err.message}.`);
 });
