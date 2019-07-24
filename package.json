@@ -1,6 +1,6 @@
 {
   "name": "tsc-publish",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Utility to help publish minimal typescript based packages",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -10,7 +10,7 @@
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "eslint src/*",
-    "tsc-publish": "..."
+    "tsc-publish": "tsc-publish"
   },
   "bin": {
     "tsc-publish": "./dist/index.js"

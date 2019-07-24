@@ -114,7 +114,7 @@ async function runCommands(commands: Command[]): Promise<void> {
   }
 }
 
-program.version('0.0.1');
+program.version('0.1.0');
 
 program
   .option('--dry-run', 'Do a dry-run of tsc-publish without publishing');
