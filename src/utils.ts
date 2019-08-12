@@ -1,18 +1,22 @@
 import {PackageJson} from './index';
 
+export function replaceString(string: string, outDir: string): string {
+  return string.replace(/^\.\//, '').replace(outDir.replace(/^\.\//, ''), '').replace(/^[\.\/|\/]/, '');
+}
+
 export function modifyPackageJson(packageJson: PackageJson, outDir: string): PackageJson {
   outDir = outDir.replace(/^\.\//, '');
   if (packageJson.main) {
-    packageJson.main = packageJson.main.replace(/^\.\//, '').replace(outDir, '').replace(/^[\.\/|\/]/, '');
+    packageJson.main = replaceString(packageJson.main, outDir);
   }
 
   if (packageJson.types) {
-    packageJson.types = packageJson.types.replace(/^\.\//, '').replace(outDir, '').replace(/^[\.\/|\/]/, '');
+    packageJson.types = replaceString(packageJson.types, outDir);
   }
 
   if (packageJson.bin) {
     for (let key in packageJson.bin) {
-      packageJson.bin[key] = packageJson.bin[key].replace(/^\.\//, '').replace(outDir, '').replace(/^[\.\/|\/]/, '');
+      packageJson.bin[key] = replaceString(packageJson.bin[key], outDir);
     }
   }
 

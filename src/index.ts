@@ -106,7 +106,7 @@ async function runCommands(commands: Command[]): Promise<void> {
       if (code !== 0) {
         throw new Error('Error encountered running last command');
       }
-      console.log(`> ${colors.green('DONE')}\n`);
+      console.log(`${colors.green('DONE')}\n`);
     }
     catch (exc) {
       throw exc;
@@ -114,10 +114,11 @@ async function runCommands(commands: Command[]): Promise<void> {
   }
 }
 
-program.version('0.1.0');
+program.version('0.2.0');
 
 program
-  .option('--dry-run', 'Do a dry-run of tsc-publish without publishing');
+  .option('--dry-run', 'Do a dry-run of tsc-publish without publishing')
+  .option('--postinstall', 'Run postinstall step for tsc-publish');
 
 program.parse(process.argv);
 
@@ -133,31 +134,57 @@ let packagePath = resolve(cwd, 'package.json');
 let packageJson: PackageJson = JSON.parse(fs.readFileSync(packagePath, {encoding: 'utf8'}));
 let tsconfig: TsconfigJson = JSON.parse(fs.readFileSync(resolve(cwd, 'tsconfig.json'), {encoding: 'utf8'}));
 
-let commands = [];
+if (program.postinstall) {
+  if (!packageJson.scripts) {
+    packageJson.scripts = {};
+  }
 
-// Find lint action
+  let modified = false;
+
+  if (packageJson.scripts['prepublishOnly']) {
+    console.log('prepublishOnly already exists, doing nothing');
+  }
+  else {
+    console.log('Adding prepublishOnly to prevent npm-publish');
+    packageJson.scripts['prepublishOnly'] = 'echo "Do not run publish directly, run tsc-publish" && exit 1';
+    modified = true;
+  }
+
+  if (!packageJson.scripts['tsc-publish']) {
+    console.log('Adding tsc-publish script');
+    packageJson.scripts['tsc-publish'] = 'tsc-publish';
+    modified = true;
+  }
+
+  if (modified) {
+    console.log(`Writing out modified package.json to ${packagePath}`);
+    fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+  }
+
+  process.exit();
+}
+
+let commands = [];
+let buildStepFound = false;
+
 if (packageJson.scripts) {
+  // Find lint action
   for (let script of ['lint', 'tslint', 'eslint', 'tslint:check', 'eslint:check']) {
     if (packageJson.scripts[script]) {
       commands.push(new NpmRunCommand(cwd, script));
       break;
     }
   }
-}
 
-// Find test action
-if (packageJson.scripts) {
+  // Find test action
   for (let script of ['test']) {
     if (packageJson.scripts[script]) {
       commands.push(new NpmRunCommand(cwd, script));
       break;
     }
   }
-}
 
-// Find build action
-let buildStepFound = false;
-if (packageJson.scripts) {
+  // Find build action
   for (let script of ['build', 'build_all']) {
     if (packageJson.scripts[script]) {
       commands.push(new NpmRunCommand(cwd, script));
@@ -196,7 +223,7 @@ runCommands(commands).then((): void => {
   if (tsconfig && tsconfig.compilerOptions && tsconfig.compilerOptions.outDir) {
     console.log(`> Copying and fixing package.json into ${tsconfig.compilerOptions.outDir}`);
     packageJson = modifyPackageJson(packageJson, tsconfig.compilerOptions.outDir);
-    console.log('done');
+    console.log(`${colors.green('DONE')}`);
     fs.writeFileSync(resolve(tsconfig.compilerOptions.outDir, 'package.json'), JSON.stringify(packageJson, null, 2));
   }
 
