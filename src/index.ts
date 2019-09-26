@@ -7,6 +7,7 @@ import colors from 'ansi-colors';
 
 import { Command, ExecCommand, NpmRunCommand, CopyCommand } from './command';
 import { modifyPackageJson, getAutoIncludeFiles } from './utils';
+import { spawnSync } from 'child_process';
 
 export interface PackageJson {
   name?: string;
@@ -39,8 +40,8 @@ async function runCommands(commands: Command[]): Promise<void> {
 program.version('0.3.0');
 
 program
-  .option('--dry-run, --dryrun', 'Do a dry-run of tsc-publish without publishing')
-  .option('--post-install, --postinstall', 'Run post-install step for tsc-publish')
+  .option('--dryrun, --dry-run', 'Do a dry-run of tsc-publish without publishing')
+  .option('--postinstall, --post-install', 'Run post-install step for tsc-publish')
   .option('--no-checks', 'Will not run lint or test steps');
 
 program.parse(process.argv);
@@ -136,8 +137,6 @@ if (!buildStepFound) {
 for (const file of getAutoIncludeFiles(cwd)) {
   commands.push(new CopyCommand(resolve(cwd, file), resolve(cwd, 'dist', file)));
 }
-console.log(commands.length);
-process.exit();
 
 runCommands(commands).then((): void => {
   console.log('> Finished All Commands');
@@ -151,6 +150,19 @@ runCommands(commands).then((): void => {
   if (program.dryRun) {
     console.log();
     console.log(`> ${colors.yellow('Dry-run enabled, not running npm-publish')}`);
+  }
+  else {
+    const child = spawnSync('npm', ['publish'], {
+      cwd: resolve(cwd, 'dist'),
+      stdio: 'inherit'
+    });
+    console.log();
+    if (child.status !== 0) {
+      console.log(`> ${colors.red('ERR')} Failed to run npm publish, please review the output above.`);
+    }
+    else {
+      console.log(`> ${colors.green('PUBLISHED')}`);
+    }
   }
 }).catch((err): void => {
   console.log();
