@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 import fs from 'fs';
-import {spawn} from 'child_process';
-import {resolve} from 'path';
+import { resolve } from 'path';
 import program from 'commander';
 import colors from 'ansi-colors';
 
-import {modifyPackageJson} from './utils';
+import { Command, ExecCommand, NpmRunCommand, CopyCommand } from './command';
+import { modifyPackageJson, getAutoIncludeFiles } from './utils';
 
 export interface PackageJson {
   name?: string;
@@ -24,101 +24,24 @@ interface TsconfigJson {
   };
 }
 
-interface Command {
-  describe(): void;
-  execute(): Promise<number>; 
-}
-
-class ExecCommand implements Command {
-  public command: string;
-  public args: string[];
-  public cwd: string;
-
-  public constructor(cwd: string, command: string, args: string[] = []) {
-    this.cwd = cwd;
-    this.command = command;
-    this.args = args;
-  }
-
-  public describe(): void {
-    console.log('> ExecCommand');
-    console.log(`>   ${colors.cyan(`${this.command} ${this.args.join(' ')}`)}`);
-  }
-
-  public execute(): Promise<number> {
-    return new Promise((resolve: any, reject: any): void => {
-      spawn(this.command, this.args, {
-        stdio: 'inherit',
-        cwd: this.cwd
-      }).on('error', (err): void => reject(err))
-        .on('exit', (code: number): void => resolve(code));
-    });
-  }
-}
-
-class NpmCommand extends ExecCommand {
-  public constructor(cwd: string, command: string[] | string) {
-    if (typeof command === 'string') {
-      command = [command];
-    }
-    super(cwd, 'npm', command);
-  }
-}
-
-class NpmRunCommand extends NpmCommand {
-  public constructor(cwd: string, command: string, args: string[] = []) {
-    super(cwd, ['run', command].concat(args));
-  }
-}
-
-class CopyCommand implements Command {
-  public src: string;
-  public dest: string;
-  public constructor(src: string, dest: string) {
-    this.src = src;
-    this.dest = dest;
-    if (!fs.existsSync(this.src) || !fs.lstatSync(this.src).isFile()) {
-      throw new Error('Can only copy files');
-    }
-    /*if (!fs.existsSync(this.dest)) {
-      throw new Error(`Dest does not exist: ${this.dest}`);
-    }*/
-  }
-
-  public describe(): void {
-    console.log('> CopyCommand');
-    console.log(`>   ${colors.cyan(this.src)}`);
-    console.log(`>   ${colors.cyan(this.dest)}`);
-  }
-
-  public async execute(): Promise<number> {
-    fs.copyFileSync(this.src, this.dest);
-    return 0;
-  }
-}
-
 async function runCommands(commands: Command[]): Promise<void> {
-  for (let command of commands) {
+  for (const command of commands) {
     console.log('> Running Command');
     command.describe();
-    try {
-      let code = await command.execute();
-      if (code !== 0) {
-        throw new Error('Error encountered running last command');
-      }
-      console.log(`${colors.green('DONE')}\n`);
+    const code = await command.execute();
+    if (code !== 0) {
+      throw new Error('Error encountered running last command');
     }
-    catch (exc) {
-      throw exc;
-    }
+    console.log(`${colors.green('DONE')}\n`);
   }
 }
 
-program.version('0.2.1');
+program.version('0.3.0');
 
 program
-  .option('--dry-run', 'Do a dry-run of tsc-publish without publishing')
-  .option('--postinstall', 'Run postinstall step for tsc-publish');
+  .option('--dry-run, --dryrun', 'Do a dry-run of tsc-publish without publishing')
+  .option('--post-install, --postinstall', 'Run post-install step for tsc-publish')
+  .option('--no-checks', 'Will not run lint or test steps');
 
 program.parse(process.argv);
 
@@ -130,11 +53,11 @@ while (!fs.existsSync(resolve(cwd, 'package.json'))) {
   cwd = resolve(cwd, '..');
 }
 
-let packagePath = resolve(cwd, 'package.json');
+const packagePath = resolve(cwd, 'package.json');
 let packageJson: PackageJson = JSON.parse(fs.readFileSync(packagePath, {encoding: 'utf8'}));
-let tsconfig: TsconfigJson = JSON.parse(fs.readFileSync(resolve(cwd, 'tsconfig.json'), {encoding: 'utf8'}));
+const tsconfig: TsconfigJson = JSON.parse(fs.readFileSync(resolve(cwd, 'tsconfig.json'), {encoding: 'utf8'}));
 
-if (program.postinstall) {
+if (program.postInstall) {
   if (!packageJson.scripts) {
     packageJson.scripts = {};
   }
@@ -164,28 +87,29 @@ if (program.postinstall) {
   process.exit();
 }
 
-let commands = [];
+const commands = [];
 let buildStepFound = false;
 
 if (packageJson.scripts) {
-  // Find lint action
-  for (let script of ['lint', 'tslint', 'eslint', 'tslint:check', 'eslint:check']) {
-    if (packageJson.scripts[script]) {
-      commands.push(new NpmRunCommand(cwd, script));
-      break;
+  if (program.checks !== false) {  // Find lint action
+    for (const script of ['lint', 'tslint', 'eslint', 'tslint:check', 'eslint:check']) {
+      if (packageJson.scripts[script]) {
+        commands.push(new NpmRunCommand(cwd, script));
+        break;
+      }
     }
-  }
 
-  // Find test action
-  for (let script of ['test']) {
-    if (packageJson.scripts[script]) {
-      commands.push(new NpmRunCommand(cwd, script));
-      break;
+    // Find test action
+    for (const script of ['test']) {
+      if (packageJson.scripts[script]) {
+        commands.push(new NpmRunCommand(cwd, script));
+        break;
+      }
     }
   }
 
   // Find build action
-  for (let script of ['build', 'build_all']) {
+  for (const script of ['build', 'build_all']) {
     if (packageJson.scripts[script]) {
       commands.push(new NpmRunCommand(cwd, script));
       buildStepFound = true;
@@ -195,8 +119,8 @@ if (packageJson.scripts) {
 }
 
 if (!buildStepFound) {
-  let inDev = packageJson.devDependencies && packageJson.devDependencies['typescript'];
-  let inDeps = packageJson.dependencies && packageJson.dependencies['typescript'];
+  const inDev = packageJson.devDependencies && packageJson.devDependencies['typescript'];
+  const inDeps = packageJson.dependencies && packageJson.dependencies['typescript'];
   if (inDev || inDeps) {
     commands.push(new ExecCommand(cwd, './node_modules/bin/tsc'));
     buildStepFound = true;
@@ -209,14 +133,11 @@ if (!buildStepFound) {
   throw new Error('No build step found');
 }
 
-for (let file_name of ['README.md', 'README', 'LICENSE.md', 'LICENSE']) {
-  if (fs.existsSync(resolve(cwd, file_name))) {
-    commands.push(new CopyCommand(resolve(cwd, file_name), resolve(cwd, 'dist', file_name)));
-  }
-  else if (fs.existsSync(resolve(cwd, file_name.toLowerCase()))) {
-    commands.push(new CopyCommand(resolve(cwd, file_name.toLowerCase()), resolve(cwd, 'dist', file_name)));
-  }
+for (const file of getAutoIncludeFiles(cwd)) {
+  commands.push(new CopyCommand(resolve(cwd, file), resolve(cwd, 'dist', file)));
 }
+console.log(commands.length);
+process.exit();
 
 runCommands(commands).then((): void => {
   console.log('> Finished All Commands');

@@ -1,4 +1,5 @@
-import {replaceString, modifyPackageJson} from '../src/utils';
+import {replaceString, modifyPackageJson, getAutoIncludeFiles} from '../src/utils';
+import { resolve } from 'path';
 
 const test_cases = [
   ['./dist/index.js', './dist'],
@@ -15,7 +16,7 @@ describe.each(test_cases)('replaceString', (input, outDir): void => {
 
 describe.each(test_cases)('modifyPackageJson', (input, outDir): void => {
   test(`sets ${input} to index.js for ${outDir}`, (): void => {
-    let actual = modifyPackageJson(
+    const actual = modifyPackageJson(
       {
         main: input,
         types: input,
@@ -23,7 +24,7 @@ describe.each(test_cases)('modifyPackageJson', (input, outDir): void => {
           foo: 'test.js',
           bin: input
         }
-      }, 
+      },
       outDir
     );
     expect(actual['main']).toEqual('index.js');
@@ -34,8 +35,15 @@ describe.each(test_cases)('modifyPackageJson', (input, outDir): void => {
 
 describe('modifyPackageJson', (): void => {
   test('test that prepublishOnly and devDependencies are deleted', (): void => {
-    let test = {devDependencies: {}, scripts: {prepublishOnly: 'test', test: 'foo'}};
-    let expected = {scripts: {test: 'foo'}};
+    const test = {devDependencies: {}, scripts: {prepublishOnly: 'test', test: 'foo'}};
+    const expected = {scripts: {test: 'foo'}};
     expect(modifyPackageJson(test, '')).toEqual(expected);
+  });
+});
+
+describe('getAutoIncludeFiles', (): void => {
+  test('test tsc-publish itself for auto-include files', (): void => {
+    const expected = ['LICENSE', 'README.md'];
+    expect(getAutoIncludeFiles(resolve(__dirname, '..'))).toEqual(expected);
   });
 });

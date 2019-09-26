@@ -1,7 +1,9 @@
 import {PackageJson} from './index';
+import { resolve, basename, extname } from 'path';
+import fs from 'fs';
 
 export function replaceString(string: string, outDir: string): string {
-  return string.replace(/^\.\//, '').replace(outDir.replace(/^\.\//, ''), '').replace(/^[\.\/|\/]/, '');
+  return string.replace(/^\.\//, '').replace(outDir.replace(/^\.\//, ''), '').replace(/^[./|/]/, '');
 }
 
 export function modifyPackageJson(packageJson: PackageJson, outDir: string): PackageJson {
@@ -15,7 +17,7 @@ export function modifyPackageJson(packageJson: PackageJson, outDir: string): Pac
   }
 
   if (packageJson.bin) {
-    for (let key in packageJson.bin) {
+    for (const key in packageJson.bin) {
       packageJson.bin[key] = replaceString(packageJson.bin[key], outDir);
     }
   }
@@ -26,4 +28,23 @@ export function modifyPackageJson(packageJson: PackageJson, outDir: string): Pac
   }
   delete packageJson.devDependencies;
   return packageJson;
+}
+
+/**
+ * Get the files that cannot be ignored by npmignore, regardless of
+ * extension
+ */
+export function getAutoIncludeFiles(path: string): string[] {
+  const AUTO_INCLUDE_FILES = ['README', 'LICENSE', 'LICENCE', 'CHANGELOG'];
+  const files: string[] = [];
+  for (const file of fs.readdirSync(path)) {
+    const filePath = resolve(path, file);
+    if (fs.lstatSync(filePath).isDirectory()) {
+      continue;
+    }
+    if (AUTO_INCLUDE_FILES.includes(basename(filePath, extname(filePath)).toUpperCase())) {
+      files.push(file);
+    }
+  }
+  return files;
 }
