@@ -110,7 +110,7 @@ if (packageJson.scripts) {
   }
 
   // Find build action
-  for (const script of ['build', 'build_all']) {
+  for (const script of ['build', 'build_all', 'compile']) {
     if (packageJson.scripts[script]) {
       commands.push(new NpmRunCommand(cwd, script));
       buildStepFound = true;
