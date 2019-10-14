@@ -9,6 +9,8 @@ import { Command, ExecCommand, NpmRunCommand, CopyCommand } from './command';
 import { modifyPackageJson, getAutoIncludeFiles } from './utils';
 import { spawnSync } from 'child_process';
 
+import stripJsonComments from 'strip-json-comments';
+
 export interface PackageJson {
   name?: string;
   scripts?: {[key: string]: string};
@@ -55,8 +57,8 @@ while (!fs.existsSync(resolve(cwd, 'package.json'))) {
 }
 
 const packagePath = resolve(cwd, 'package.json');
-let packageJson: PackageJson = JSON.parse(fs.readFileSync(packagePath, {encoding: 'utf8'}));
-const tsconfig: TsconfigJson = JSON.parse(fs.readFileSync(resolve(cwd, 'tsconfig.json'), {encoding: 'utf8'}));
+let packageJson: PackageJson = JSON.parse(stripJsonComments(fs.readFileSync(packagePath, {encoding: 'utf8'})));
+const tsconfig: TsconfigJson = JSON.parse(stripJsonComments(fs.readFileSync(resolve(cwd, 'tsconfig.json'), {encoding: 'utf8'})));
 
 if (program.postInstall) {
   if (!packageJson.scripts) {

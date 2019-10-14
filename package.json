@@ -42,6 +42,7 @@
   "dependencies": {
     "@types/node": "^12.6.3",
     "ansi-colors": "^4.1.1",
-    "commander": "^3.0.0"
+    "commander": "^3.0.0",
+    "strip-json-comments": "^3.0.1"
   }
 }
