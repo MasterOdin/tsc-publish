@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { spawn } from 'child_process';
 import colors from 'ansi-colors';
+import { join, dirname } from 'path';
 
 export interface Command {
   describe(): void;
@@ -49,12 +50,14 @@ export class NpmRunCommand extends NpmCommand {
 }
 
 export class CopyCommand implements Command {
+  public file: string;
   public src: string;
   public dest: string;
-  public constructor(src: string, dest: string) {
+  public constructor(src: string, dest: string, file: string) {
+    this.file = file;
     this.src = src;
     this.dest = dest;
-    if (!fs.existsSync(this.src) || !fs.lstatSync(this.src).isFile()) {
+    if (!fs.existsSync(join(this.src, this.file)) || !fs.lstatSync(join(this.src, this.file)).isFile()) {
       throw new Error('Can only copy files');
     }
     /*if (!fs.existsSync(this.dest)) {
@@ -63,13 +66,16 @@ export class CopyCommand implements Command {
   }
 
   public describe(): void {
+    if (!fs.existsSync(join(this.dest, dirname(this.file)))) {
+      fs.mkdirSync(join(this.dest, dirname(this.file)), {recursive: true});
+    }
     console.log('> CopyCommand');
-    console.log(`   ${colors.cyan(this.src)}`);
-    console.log(`   -> ${colors.green(this.dest)}`);
+    console.log(`   ${colors.cyan(join(this.src, this.file))}`);
+    console.log(`   -> ${colors.green(join(this.dest, this.file))}`);
   }
 
   public async execute(): Promise<number> {
-    fs.copyFileSync(this.src, this.dest);
+    fs.copyFileSync(join(this.src, this.file), join(this.dest, this.file));
     return 0;
   }
 }

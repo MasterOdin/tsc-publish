@@ -1,4 +1,4 @@
-import {replaceString, modifyPackageJson, getAutoIncludeFiles} from '../src/utils';
+import {replaceString, modifyPackageJson, getNonSrcFiles} from '../src/utils';
 import { resolve } from 'path';
 
 const test_cases = [
@@ -41,9 +41,9 @@ describe('modifyPackageJson', (): void => {
   });
 });
 
-describe('getAutoIncludeFiles', (): void => {
+describe('getNonSrcFiles', (): void => {
   test('test tsc-publish itself for auto-include files', (): void => {
     const expected = ['LICENSE', 'README.md'];
-    expect(getAutoIncludeFiles(resolve(__dirname, '..'))).toEqual(expected);
+    expect(getNonSrcFiles(resolve(__dirname, '..'))).toEqual(expected);
   });
 });

@@ -6,7 +6,7 @@ import program from 'commander';
 import colors from 'ansi-colors';
 
 import { Command, ExecCommand, NpmRunCommand, CopyCommand } from './command';
-import { modifyPackageJson, getAutoIncludeFiles } from './utils';
+import { modifyPackageJson, getNonSrcFiles } from './utils';
 import { spawnSync } from 'child_process';
 
 import stripJsonComments from 'strip-json-comments';
@@ -131,13 +131,13 @@ if (!buildStepFound) {
 }
 
 // TODO: check if tsc is installed in path
-
 if (!buildStepFound) {
   throw new Error('No build step found');
 }
 
-for (const file of getAutoIncludeFiles(cwd)) {
-  commands.push(new CopyCommand(resolve(cwd, file), resolve(cwd, 'dist', file)));
+const files = getNonSrcFiles(cwd, (tsconfig && tsconfig.compilerOptions) ? tsconfig.compilerOptions.outDir : undefined);
+for (const file of files) {
+  commands.push(new CopyCommand(resolve(cwd), resolve(cwd, 'dist'), file));
 }
 
 runCommands(commands).then((): void => {
