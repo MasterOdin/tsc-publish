@@ -39,8 +39,10 @@ dist/
   README.md
   package.json
 ```
+where `tsc` handles publishing to your `outDir` and `tsc-publish` handles copying all of the other metadata files, using
+the `.npmignore` file if it exists, else just copying in `package.json` and `README`, `LICEN[CS]E`, and `CHANGELOG`.
 
-and then publish from directly within the `dist/` directory, meaning you can minimize the amount of imports in `index.js`
+From there, it publishes directly within the `dist/` directory, meaning you can minimize the amount of imports in `index.js`
 and that consumers can more cleanly import other sources doing `import {bar} from 'your-package/foo`.
 
 Additionally, tsc-publish will help ensure that all steps of the build/publish lifecycle are hit to help ensure
