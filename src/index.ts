@@ -152,7 +152,7 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, tsco
   });
 }
 
-program.version('0.3.0');
+program.version('0.5.2');
 
 program
   .option('--dryrun, --dry-run', 'Do a dry-run of tsc-publish without publishing')

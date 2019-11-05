@@ -64,12 +64,11 @@ $ tsc-publish --help
 Usage: tsc-publish [options]
 
 Options:
-  -V, --version  output the version number
-  -v, --verbose  verbose output
-  --bugfix       increment bugfix version
-  --minor        increment minor version
-  --major        increment major version
-  -h, --help     output usage information
+  -V, --version                  output the version number
+  --dryrun, --dry-run            Do a dry-run of tsc-publish without publishing
+  --postinstall, --post-install  Run post-install step for tsc-publish
+  --no-checks                    Will not run lint or test steps
+  -h, --help                     output usage information
 ```
 
 ## package.json

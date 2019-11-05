@@ -1,6 +1,6 @@
 {
   "name": "tsc-publish",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Utility to help publish minimal typescript based packages",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
