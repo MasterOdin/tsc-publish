@@ -1,4 +1,4 @@
-import {replaceString, modifyPackageJson, getNonSrcFiles, shouldIncludeFile} from '../src/utils';
+import {replaceString, modifyPackageJson, getNonSrcFiles, shouldIncludeFile, parseTsConfig} from '../src/utils';
 import { resolve } from 'path';
 
 const test_cases = [
@@ -64,5 +64,16 @@ const filterTestCases = [
 describe.each(filterTestCases)('shouldIncludeFile', (entry, outDir, expected): void => {
   test(`should include file ${entry} from "${outDir}"`, (): void => {
     expect(shouldIncludeFile((entry as string), (outDir as string))).toEqual(expected);
+  });
+});
+
+const tsconfigs = [
+  'tsconfig.json',
+  'tsconfig_comma.json',
+  'tsconfig_comments.json'
+];
+describe.each(tsconfigs)('parseTsConfig', (file): void => {
+  test(`test parsing ${file}`, (): void => {
+    expect(parseTsConfig(resolve(__dirname, 'test_files', file))).toBeTruthy();
   });
 });

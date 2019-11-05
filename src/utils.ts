@@ -2,6 +2,7 @@ import {PackageJson} from './index';
 import { join, resolve, basename, extname } from 'path';
 import fs from 'fs';
 import walk from 'ignore-walk';
+import stripJsonComments from 'strip-json-comments';
 
 const IGNORED_FILES = ['.DS_Store', '.npmrc', 'npm-debug.log', 'config.gypi', '.gitignore', 'package.json', 'package-lock.json', '.DS_Store'];
 const AUTO_INCLUDE_FILES = ['README', 'LICENSE', 'LICENCE', 'CHANGELOG'];
@@ -76,4 +77,14 @@ export function getNonSrcFiles(path: string, outDir?: string): string[] {
     }
   }
   return Array.from(files);
+}
+
+/**
+ * Function to load the tsconfig.json file, which allows for both comments as well
+ * as for trailing commas.
+ * @param path
+ */
+export function parseTsConfig(path: string): any { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const trailingCommaRegex = /,(?=\s*?[}\]])/g;
+  return JSON.parse(stripJsonComments(fs.readFileSync(path, {encoding: 'utf8'})).replace(trailingCommaRegex, ''));
 }
