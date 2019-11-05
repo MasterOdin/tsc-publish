@@ -10,6 +10,7 @@
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "eslint src/*",
+    "codecov": "codecov",
     "tsc-publish": "npm run build && node ./dist/index.js",
     "tsc-publish-dry": "npm run build && node ./dist/index.js --dry-run"
   },
@@ -32,17 +33,18 @@
   },
   "homepage": "https://github.com/MasterOdin/typescript-publish#readme",
   "devDependencies": {
-    "@types/jest": "^24.0.19",
-    "@typescript-eslint/eslint-plugin": "^2.4.0",
-    "@typescript-eslint/parser": "^2.4.0",
-    "eslint": "^6.4.0",
+    "@types/jest": "^24.0.21",
+    "@typescript-eslint/eslint-plugin": "^2.6.1",
+    "@typescript-eslint/parser": "^2.6.1",
+    "codecov": "^3.6.1",
+    "eslint": "^6.6.0",
     "jest": "^24.8.0",
     "ts-jest": "^24.0.2",
     "typescript": "^3.5.3"
   },
   "dependencies": {
     "@types/ignore-walk": "^3.0.1",
-    "@types/node": "^12.11.1",
+    "@types/node": "^12.12.5",
     "ansi-colors": "^4.1.1",
     "commander": "^3.0.0",
     "ignore-walk": "^3.0.3",
