@@ -3,6 +3,9 @@ import { join, resolve, basename, extname } from 'path';
 import fs from 'fs';
 import walk from 'ignore-walk';
 
+const IGNORED_FILES = ['.DS_Store', '.npmrc', 'npm-debug.log', 'config.gypi', '.gitignore', 'package.json', 'package-lock.json', '.DS_Store'];
+const AUTO_INCLUDE_FILES = ['README', 'LICENSE', 'LICENCE', 'CHANGELOG'];
+
 export function stripLeadingSlash(string: string): string {
   return string.replace(/^\.?\//, '');
 }
@@ -35,6 +38,16 @@ export function modifyPackageJson(packageJson: PackageJson, outDir: string): Pac
   return packageJson;
 }
 
+export function shouldIncludeFile(entry: string, outDir: string): boolean {
+  return (
+    entry.substring(0, 5) !== '.git/'
+    && entry.substring(0, 4) !== '.hg/'
+    && entry.substring(0, 13) !== 'node_modules/'
+    && (outDir === '' || entry.substring(0, outDir.length) !== outDir)
+    && !(IGNORED_FILES.includes(entry))
+  );
+}
+
 /**
  * Gets list of files to include in the build folder.
  *
@@ -44,29 +57,23 @@ export function modifyPackageJson(packageJson: PackageJson, outDir: string): Pac
  * @param path path of directory to get files out of
  */
 export function getNonSrcFiles(path: string, outDir?: string): string[] {
-  const files: string[] = [];
+  const files: Set<string> = new Set();
   const strippedOutDir = stripLeadingSlash(outDir || '');
   if (fs.existsSync(join(path, '.npmignore'))) {
-    files.push(...walk.sync({path: path, ignoreFiles: ['.npmignore']}).filter((entry) => {
-      return (
-        entry.substring(0, 5) !== '.git/'
-        && (strippedOutDir === '' || entry.substring(0, strippedOutDir.length) !== strippedOutDir)
-        && entry !== '.gitignore'
-        && entry !== '.npmignore'
-        && entry !== 'package.json'
-        && entry !== 'package-lock.json'
-      );
-    }));
+    const includeFiles = walk.sync({path: path, ignoreFiles: ['.npmignore']}).filter((entry) => {
+      return shouldIncludeFile(entry, strippedOutDir);
+    });
+    includeFiles.forEach((entry) => files.add(entry));
   }
-  const AUTO_INCLUDE_FILES = ['README', 'LICENSE', 'LICENCE', 'CHANGELOG'];
+
   for (const file of fs.readdirSync(path)) {
     const filePath = resolve(path, file);
     if (fs.lstatSync(filePath).isDirectory()) {
       continue;
     }
     if (AUTO_INCLUDE_FILES.includes(basename(filePath, extname(filePath)).toUpperCase())) {
-      files.push(file);
+      files.add(file);
     }
   }
-  return files;
+  return Array.from(files);
 }
