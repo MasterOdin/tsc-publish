@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "@types/ignore-walk": "^3.0.1",
-    "@types/node": "^10.17.15",
+    "@types/node": "^11.15.6",
     "ansi-colors": "^4.1.1",
     "commander": "^3.0.0",
     "ignore-walk": "^3.0.3",
