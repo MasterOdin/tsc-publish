@@ -105,7 +105,7 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, tsco
     const inDev = packageJson.devDependencies && packageJson.devDependencies['typescript'];
     const inDeps = packageJson.dependencies && packageJson.dependencies['typescript'];
     if (inDev || inDeps) {
-      commands.push(new ExecCommand(cwd, './node_modules/bin/tsc'));
+      commands.push(new ExecCommand(cwd, './node_modules/.bin/tsc'));
       buildStepFound = true;
     }
   }
