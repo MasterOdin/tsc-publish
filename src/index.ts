@@ -136,7 +136,7 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, tsco
     else {
       const child = spawnSync('npm', ['publish'], {
         cwd: resolve(cwd, 'dist'),
-        stdio: 'inherit'
+        stdio: 'inherit',
       });
       console.log();
       if (child.status !== 0) {
@@ -161,7 +161,8 @@ program
 
 program.parse(process.argv);
 
-let cwd = process.cwd();
+// INIT_CWD is set when going through npm run or npm install
+let cwd = process.env.INIT_CWD ? process.env.INIT_CWD : process.cwd();
 while (!fs.existsSync(resolve(cwd, 'package.json'))) {
   if (cwd === resolve(cwd, '..')) {
     throw new Error("Could not find package.json file");

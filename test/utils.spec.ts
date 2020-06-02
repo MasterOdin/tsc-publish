@@ -5,7 +5,7 @@ const test_cases = [
   ['./dist/index.js', './dist'],
   ['dist/index.js', './dist'],
   ['./dist/index.js', 'dist'],
-  ['dist/index.js', 'dist']
+  ['dist/index.js', 'dist'],
 ];
 
 describe.each(test_cases)('replaceString', (input, outDir): void => {
@@ -22,10 +22,10 @@ describe.each(test_cases)('modifyPackageJson', (input, outDir): void => {
         types: input,
         bin: {
           foo: 'test.js',
-          bin: input
-        }
+          bin: input,
+        },
       },
-      outDir
+      outDir,
     );
     expect(actual['main']).toEqual('index.js');
     expect(actual['types']).toEqual('index.js');
@@ -58,7 +58,7 @@ const filterTestCases = [
   ['.gitignore', '', false],
   ['.git/some/file', '', false],
   ['node_modules/some/module', '', false],
-  ['.DS_Store', '', false]
+  ['.DS_Store', '', false],
 ];
 
 describe.each(filterTestCases)('shouldIncludeFile', (entry, outDir, expected): void => {
@@ -70,7 +70,7 @@ describe.each(filterTestCases)('shouldIncludeFile', (entry, outDir, expected): v
 const tsconfigs = [
   'tsconfig.json',
   'tsconfig_comma.json',
-  'tsconfig_comments.json'
+  'tsconfig_comments.json',
 ];
 describe.each(tsconfigs)('parseTsConfig', (file): void => {
   test(`test parsing ${file}`, (): void => {

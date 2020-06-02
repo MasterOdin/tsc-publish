@@ -28,7 +28,7 @@ export class ExecCommand implements Command {
     return new Promise((resolve: (code: number) => void, reject: (err: unknown) => void): void => {
       spawn(this.command, this.args, {
         stdio: 'inherit',
-        cwd: this.cwd
+        cwd: this.cwd,
       }).on('error', reject).on('exit', resolve);
     });
   }
