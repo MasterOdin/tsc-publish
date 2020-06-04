@@ -1,6 +1,8 @@
 # typescript-publish
 
-[![Build Status](https://travis-ci.com/MasterOdin/tsc-publish.svg?branch=master)](https://travis-ci.com/MasterOdin/tsc-publish)
+[![Test](https://github.com/MasterOdin/publisher/workflows/Test/badge.svg?branch=master)](https://github.com/MasterOdin/publisher/actions?query=workflow%3ATest+branch%3Amaster)
+[![codecov](https://codecov.io/gh/MasterOdin/publisher/branch/master/graph/badge.svg)](https://codecov.io/gh/MasterOdin/publisher)
+[![npm (scoped)](https://img.shields.io/npm/v/@masterodin/publisher)](https://npmjs.com/package/@masterodin/publisher)
 
 Utility package to handle publishing standard TypeScript packages.
 
@@ -11,7 +13,8 @@ the source code (keeping the working repo nice and clean), and that the end-user
 easier importing.
 
 For example, assume you have the following directory structure:
-```
+
+```text
 dist/
   foo.js
   foo.d.ts
@@ -30,7 +33,8 @@ everything the user would want to import is exposed in `./dist/index.js`, this c
 bloated files. Additionally, if the user wants to import something from `foo.js`, they will have to do something like
 `import {bar} from 'your-package/dist/foo'` which is cumbersome at best. This package helps to alleviate these pain
 points such that running it will produce the following directory structure:
-```
+
+```text
 dist/
   foo.js
   foo.d.ts
@@ -39,6 +43,7 @@ dist/
   README.md
   package.json
 ```
+
 where `tsc` handles publishing to your `outDir` and `tsc-publish` handles copying all of the other metadata files, using
 the `.npmignore` file if it exists, else just copying in `package.json` and `README`, `LICEN[CS]E`, and `CHANGELOG`.
 
@@ -79,7 +84,7 @@ Out of the box, publisher will try and figure out the right thing to do, making 
 a handful of build systems. If it cannot determine things automatically, you can specify the following
 within a `.publisherrc` file:
 
-```json
+```javascript
 {
   "publisher": {
     "steps": [],     // list of steps to run, defaults to lint, run, build
@@ -87,6 +92,7 @@ within a `.publisherrc` file:
     "publish": true  // whether to run npm publish or not at end
   }
 }
+```
 
 ## package.json
 
@@ -94,6 +100,7 @@ It's recommended to add `"prepublishOnly": "echo \"Run tsc-publish instead!\" &&
 `scripts` object in the `package.json` to prevent any accidential `npm publish` usage.
 
 Add to the package.json `scripts`:
+
 ```json
 "scripts" {
     "tsc-publish-bugfix": "tsc-publish --bugfix",
