@@ -43,7 +43,7 @@ describe('modifyPackageJson', (): void => {
 
 describe('getNonSrcFiles', (): void => {
   test('test publisher itself for auto-include files', (): void => {
-    const expected = ['LICENSE', 'README.md'];
+    const expected = ['.npmignore', 'LICENSE', 'README.md'];
     expect(getNonSrcFiles(resolve(__dirname, '..'))).toEqual(expected);
   });
 

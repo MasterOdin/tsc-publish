@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MasterOdin/typescript-publish.git"
+    "url": "git+https://github.com/MasterOdin/publisher.git"
   },
   "keywords": [
     "typescript",
@@ -29,9 +29,9 @@
   "author": "Matthew Peveler",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/MasterOdin/typescript-publish/issues"
+    "url": "https://github.com/MasterOdin/publisher/issues"
   },
-  "homepage": "https://github.com/MasterOdin/typescript-publish#readme",
+  "homepage": "https://github.com/MasterOdin/publisher#readme",
   "devDependencies": {
     "@masterodin/eslint-config-typescript": "^1.0.1",
     "@types/jest": "^25.2.3",

@@ -4,7 +4,16 @@ import fs from 'fs';
 import walk from 'ignore-walk';
 import stripJsonComments from 'strip-json-comments';
 
-const IGNORED_FILES = ['.DS_Store', '.npmrc', 'npm-debug.log', 'config.gypi', '.gitignore', 'package.json', 'package-lock.json', '.DS_Store'];
+const IGNORED_FILES = [
+  '.DS_Store',
+  '.npmrc',
+  'npm-debug.log',
+  'config.gypi',
+  '.gitignore',
+  'package.json',
+  'package-lock.json',
+  '.DS_Store',
+];
 const AUTO_INCLUDE_FILES = ['README', 'LICENSE', 'LICENCE', 'CHANGELOG'];
 
 export function stripLeadingSlash(string: string): string {
