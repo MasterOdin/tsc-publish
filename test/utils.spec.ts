@@ -57,12 +57,14 @@ const filterTestCases = [
   ['.npmignore', '', true],
   ['.gitignore', '', false],
   ['.git/some/file', '', false],
+  ['.hg/some/file', '', false],
   ['node_modules/some/module', '', false],
   ['.DS_Store', '', false],
+  ['outDir/file', 'outDir', false],
 ];
 
 describe.each(filterTestCases)('shouldIncludeFile', (entry, outDir, expected): void => {
-  test(`should include file ${entry} from "${outDir}"`, (): void => {
+  test(`should ${expected ? 'include' : 'exclude'} file ${entry}`, (): void => {
     expect(shouldIncludeFile((entry as string), (outDir as string))).toEqual(expected);
   });
 });
