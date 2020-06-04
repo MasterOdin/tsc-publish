@@ -53,9 +53,6 @@ export class CopyCommand implements Command {
     if (!fs.existsSync(join(this.src, this.file)) || !fs.lstatSync(join(this.src, this.file)).isFile()) {
       throw new Error('Can only copy files');
     }
-    if (!fs.existsSync(join(this.dest, dirname(this.file)))) {
-      fs.mkdirSync(join(this.dest, dirname(this.file)), {recursive: true});
-    }
   }
 
   public describe(): void {
@@ -65,6 +62,9 @@ export class CopyCommand implements Command {
   }
 
   public async execute(): Promise<number> {
+    if (!fs.existsSync(join(this.dest, dirname(this.file)))) {
+      fs.mkdirSync(join(this.dest, dirname(this.file)), {recursive: true});
+    }
     fs.copyFileSync(join(this.src, this.file), join(this.dest, this.file));
     return 0;
   }
@@ -79,11 +79,6 @@ export class BulkCopyCommand implements Command {
     this.src = src;
     this.dest = dest;
     this.files = files;
-    for (const file of files) {
-      if (!fs.existsSync(join(this.dest, dirname(file)))) {
-        fs.mkdirSync(join(this.dest, dirname(file)), {recursive: true});
-      }
-    }
   }
 
   public describe(): void {
@@ -98,6 +93,9 @@ export class BulkCopyCommand implements Command {
     return new Promise((resolve) => {
       const promises = [];
       for (const file of this.files) {
+        if (!fs.existsSync(join(this.dest, dirname(file)))) {
+          fs.mkdirSync(join(this.dest, dirname(file)), {recursive: true});
+        }
         promises.push(fs.promises.copyFile(join(this.src, file), join(this.dest, file)));
       }
       Promise.all(promises).then(() => resolve(0));
