@@ -1,21 +1,21 @@
 {
-  "name": "tsc-publish",
+  "name": "@masterodin/publisher",
   "version": "0.6.0",
   "description": "Utility to help publish minimal typescript based packages",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "prepublishOnly": "echo \"Do not run publish directly, run tsc-publish\" && exit 1",
+    "prepublishOnly": "echo \"Do not run publish directly, run publisher\" && exit 1",
     "test": "jest --verbose",
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "eslint src/**/* test/*.spec.ts",
     "codecov": "codecov",
-    "tsc-publish": "npm run build && node ./dist/index.js",
-    "tsc-publish-dry": "npm run build && node ./dist/index.js --dry-run"
+    "publisher": "npm run build && node ./dist/index.js",
+    "publisher-dry": "npm run build && node ./dist/index.js --dry-run"
   },
   "bin": {
-    "tsc-publish": "./dist/index.js"
+    "publisher": "./dist/index.js"
   },
   "repository": {
     "type": "git",

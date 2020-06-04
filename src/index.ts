@@ -43,13 +43,13 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, publ
     }
     else {
       console.log('Adding prepublishOnly to prevent npm-publish');
-      packageJson.scripts['prepublishOnly'] = 'echo "Do not run publish directly, run tsc-publish" && exit 1';
+      packageJson.scripts['prepublishOnly'] = 'echo "Do not run publish directly, run publisher" && exit 1';
       modified = true;
     }
 
-    if (!packageJson.scripts['tsc-publish']) {
-      console.log('Adding tsc-publish script');
-      packageJson.scripts['tsc-publish'] = 'tsc-publish';
+    if (!packageJson.scripts['publisher']) {
+      console.log('Adding publisher script');
+      packageJson.scripts['publisher'] = 'publisher';
       modified = true;
     }
 
@@ -100,8 +100,8 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, publ
 program.version('0.5.2');
 
 program
-  .option('--dryrun, --dry-run', 'Do a dry-run of tsc-publish without publishing')
-  .option('--postinstall, --post-install', 'Run post-install step for tsc-publish')
+  .option('--dryrun, --dry-run', 'Do a dry-run of publisher without publishing')
+  .option('--postinstall, --post-install', 'Run post-install step for publisher')
   .option('--no-checks', 'Will not run lint or test steps');
 
 program.parse(process.argv);

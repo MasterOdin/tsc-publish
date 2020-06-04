@@ -44,13 +44,13 @@ dist/
   package.json
 ```
 
-where `tsc` handles publishing to your `outDir` and `tsc-publish` handles copying all of the other metadata files, using
+where `tsc` handles publishing to your `outDir` and `publisher` handles copying all of the other metadata files, using
 the `.npmignore` file if it exists, else just copying in `package.json` and `README`, `LICEN[CS]E`, and `CHANGELOG`.
 
 From there, it publishes directly within the `dist/` directory, meaning you can minimize the amount of imports in `index.js`
 and that consumers can more cleanly import other sources doing `import {bar} from 'your-package/foo`.
 
-Additionally, tsc-publish will help ensure that all steps of the build/publish lifecycle are hit to help ensure
+Additionally, publisher will help ensure that all steps of the build/publish lifecycle are hit to help ensure
 that no steps are missed. By default, it will run:
 * lint
 * build
@@ -61,19 +61,19 @@ and if any of those fail, the publish is cancelled.
 ## Installation
 
 ```bash
-npm install --save-dev tsc-publish
+npm install --save-dev @masterodin/publisher
 ```
 
 ## Usage
 
 ```text
-$ tsc-publish --help
-Usage: tsc-publish [options]
+$ publisher --help
+Usage: publisher [options]
 
 Options:
   -V, --version                  output the version number
-  --dryrun, --dry-run            Do a dry-run of tsc-publish without publishing
-  --postinstall, --post-install  Run post-install step for tsc-publish
+  --dryrun, --dry-run            Do a dry-run of publisher without publishing
+  --postinstall, --post-install  Run post-install step for publisher
   --no-checks                    Will not run lint or test steps
   -h, --help                     output usage information
 ```
@@ -96,15 +96,5 @@ within a `.publisherrc` file:
 
 ## package.json
 
-It's recommended to add `"prepublishOnly": "echo \"Run tsc-publish instead!\" && exit 1"` to the
+It's recommended to add `"prepublishOnly": "echo \"Run publisher instead!\" && exit 1"` to the
 `scripts` object in the `package.json` to prevent any accidential `npm publish` usage.
-
-Add to the package.json `scripts`:
-
-```json
-"scripts" {
-    "tsc-publish-bugfix": "tsc-publish --bugfix",
-    "tsc-publish-minor": "tsc-publish --minor",
-    "tsc-publish-major": "tsc-public --major"
-}
-```
