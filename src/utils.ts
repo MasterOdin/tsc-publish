@@ -1,4 +1,4 @@
-import {PackageJson} from './index';
+import { PackageJson } from './types';
 import { join, resolve, basename, extname } from 'path';
 import fs from 'fs';
 import walk from 'ignore-walk';

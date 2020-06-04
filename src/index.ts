@@ -1,25 +1,16 @@
 #!/usr/bin/env node
 
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import { resolve } from 'path';
-import program from 'commander';
 import colors from 'ansi-colors';
-
-import { Command, ExecCommand, NpmRunCommand, CopyCommand } from './command';
-import { modifyPackageJson, getNonSrcFiles, parseTsConfig } from './utils';
-import { spawnSync } from 'child_process';
-
+import program from 'commander';
 import stripJsonComments from 'strip-json-comments';
 
-export interface PackageJson {
-  name?: string;
-  scripts?: {[key: string]: string};
-  dependencies?: {[key: string]: string};
-  devDependencies?: {[key: string]: string};
-  bin?: {[key: string]: string};
-  main?: string;
-  types?: string;
-}
+import { Command } from './command';
+import { getCommands } from './runner';
+import { PackageJson, PublisherConfig } from './types';
+import { modifyPackageJson, parseTsConfig } from './utils';
 
 interface TsConfigJson {
   compilerOptions?: {
@@ -39,7 +30,7 @@ async function runCommands(commands: Command[]): Promise<void> {
   }
 }
 
-function runner(cwd: string, packagePath: string, packageJson: PackageJson, tsconfig: TsConfigJson): void {
+function runner(cwd: string, packagePath: string, packageJson: PackageJson, publisherRc: PublisherConfig, tsconfig: TsConfigJson): void {
   if (program.postInstall) {
     if (!packageJson.scripts) {
       packageJson.scripts = {};
@@ -70,57 +61,9 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, tsco
     process.exit();
   }
 
-  const commands = [];
-  let buildStepFound = false;
+  const outDir = publisherRc.outDir || tsconfig.compilerOptions?.outDir || cwd;
 
-  if (packageJson.scripts) {
-    if (program.checks !== false) {  // Find lint action
-      for (const script of ['lint', 'tslint', 'eslint', 'tslint:check', 'eslint:check']) {
-        if (packageJson.scripts[script]) {
-          commands.push(new NpmRunCommand(cwd, script));
-          break;
-        }
-      }
-
-      // Find test action
-      for (const script of ['test']) {
-        if (packageJson.scripts[script]) {
-          commands.push(new NpmRunCommand(cwd, script));
-          break;
-        }
-      }
-    }
-
-    // Find build action
-    for (const script of ['build', 'build_all', 'compile']) {
-      if (packageJson.scripts[script]) {
-        commands.push(new NpmRunCommand(cwd, script));
-        buildStepFound = true;
-        break;
-      }
-    }
-  }
-
-  if (!buildStepFound) {
-    const inDev = packageJson.devDependencies && packageJson.devDependencies['typescript'];
-    const inDeps = packageJson.dependencies && packageJson.dependencies['typescript'];
-    if (inDev || inDeps) {
-      commands.push(new ExecCommand(cwd, './node_modules/.bin/tsc'));
-      buildStepFound = true;
-    }
-  }
-
-  // TODO: check if tsc is installed in path
-  if (!buildStepFound) {
-    throw new Error('No build step found');
-  }
-
-  const files = getNonSrcFiles(cwd, (tsconfig && tsconfig.compilerOptions) ? tsconfig.compilerOptions.outDir : undefined);
-  for (const file of files) {
-    commands.push(new CopyCommand(resolve(cwd), resolve(cwd, 'dist'), file));
-  }
-
-  runCommands(commands).then((): void => {
+  runCommands(getCommands(cwd, outDir, packageJson, publisherRc, program.checks)).then((): void => {
     console.log('> Finished All Commands');
     if (tsconfig && tsconfig.compilerOptions && tsconfig.compilerOptions.outDir) {
       console.log(`> Copying and fixing package.json into ${tsconfig.compilerOptions.outDir}`);
@@ -129,21 +72,23 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, tsco
       fs.writeFileSync(resolve(tsconfig.compilerOptions.outDir, 'package.json'), JSON.stringify(packageJson, null, 2));
     }
 
-    if (program.dryRun) {
-      console.log();
-      console.log(`> ${colors.yellow('Dry-run enabled, not running npm-publish')}`);
-    }
-    else {
-      const child = spawnSync('npm', ['publish'], {
-        cwd: resolve(cwd, 'dist'),
-        stdio: 'inherit',
-      });
-      console.log();
-      if (child.status !== 0) {
-        console.log(`> ${colors.red('ERR')} Failed to run npm publish, please review the output above.`);
+    if (publisherRc.publish !== false) {
+      if (program.dryRun) {
+        console.log();
+        console.log(`> ${colors.yellow('Dry-run enabled, not running npm-publish')}`);
       }
       else {
-        console.log(`> ${colors.green('PUBLISHED')}`);
+        const child = spawnSync('npm', ['publish'], {
+          cwd: resolve(cwd, 'dist'),
+          stdio: 'inherit',
+        });
+        console.log();
+        if (child.status !== 0) {
+          console.log(`> ${colors.red('ERR')} Failed to run npm publish, please review the output above.`);
+        }
+        else {
+          console.log(`> ${colors.green('PUBLISHED')}`);
+        }
       }
     }
   }).catch((err): void => {
@@ -180,6 +125,11 @@ catch (exc) {
   process.exit(1);
 }
 
+let publisherRc: PublisherConfig = {};
+if (fs.existsSync(resolve(cwd, '.publisherrc'))) {
+  publisherRc = JSON.parse(stripJsonComments(fs.readFileSync(resolve(cwd, '.publisherrc'), {encoding: 'utf8'})));
+}
+
 let tsconfig: TsConfigJson | undefined = undefined;
 try {
   tsconfig = parseTsConfig(resolve(cwd, 'tsconfig.json'));
@@ -190,7 +140,7 @@ catch (exc) {
 }
 
 if (packageJson && tsconfig) {
-  runner(cwd, packagePath, packageJson, tsconfig);
+  runner(cwd, packagePath, packageJson, publisherRc, tsconfig);
 }
 else {
   console.error('Failed to load package.json or tsconfig.json');

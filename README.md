@@ -54,12 +54,14 @@ that no steps are missed. By default, it will run:
 and if any of those fail, the publish is cancelled.
 
 ## Installation
+
 ```bash
 npm install --save-dev tsc-publish
 ```
 
 ## Usage
-```bash
+
+```text
 $ tsc-publish --help
 Usage: tsc-publish [options]
 
@@ -71,7 +73,23 @@ Options:
   -h, --help                     output usage information
 ```
 
+## Configuration
+
+Out of the box, publisher will try and figure out the right thing to do, making it capable to a
+a handful of build systems. If it cannot determine things automatically, you can specify the following
+within a `.publisherrc` file:
+
+```json
+{
+  "publisher": {
+    "steps": [],     // list of steps to run, defaults to lint, run, build
+    "outDir": "",    // directory to publish
+    "publish": true  // whether to run npm publish or not at end
+  }
+}
+
 ## package.json
+
 It's recommended to add `"prepublishOnly": "echo \"Run tsc-publish instead!\" && exit 1"` to the
 `scripts` object in the `package.json` to prevent any accidential `npm publish` usage.
 

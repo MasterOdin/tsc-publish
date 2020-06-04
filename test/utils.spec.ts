@@ -1,20 +1,20 @@
 import {replaceString, modifyPackageJson, getNonSrcFiles, shouldIncludeFile, parseTsConfig} from '../src/utils';
 import { resolve } from 'path';
 
-const test_cases = [
+const testCases = [
   ['./dist/index.js', './dist'],
   ['dist/index.js', './dist'],
   ['./dist/index.js', 'dist'],
   ['dist/index.js', 'dist'],
 ];
 
-describe.each(test_cases)('replaceString', (input, outDir): void => {
+describe.each(testCases)('replaceString', (input, outDir): void => {
   test(`sets ${input} to index.js for ${outDir}`, (): void => {
     expect(replaceString(input, outDir)).toEqual('index.js');
   });
 });
 
-describe.each(test_cases)('modifyPackageJson', (input, outDir): void => {
+describe.each(testCases)('modifyPackageJson', (input, outDir): void => {
   test(`sets ${input} to index.js for ${outDir}`, (): void => {
     const actual = modifyPackageJson(
       {

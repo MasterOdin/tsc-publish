@@ -1,7 +1,9 @@
-import fs from 'fs';
 import { spawn } from 'child_process';
-import colors from 'ansi-colors';
+import fs from 'fs';
 import { join, dirname } from 'path';
+
+import colors from 'ansi-colors';
+
 
 export interface Command {
   describe(): void;
@@ -34,18 +36,9 @@ export class ExecCommand implements Command {
   }
 }
 
-export class NpmCommand extends ExecCommand {
-  public constructor(cwd: string, command: string[] | string) {
-    if (typeof command === 'string') {
-      command = [command];
-    }
-    super(cwd, 'npm', command);
-  }
-}
-
-export class NpmRunCommand extends NpmCommand {
+export class NpmRunCommand extends ExecCommand {
   public constructor(cwd: string, command: string, args: string[] = []) {
-    super(cwd, ['run', command].concat(args));
+    super(cwd, 'npm', ['run', command].concat(args));
   }
 }
 
@@ -60,15 +53,12 @@ export class CopyCommand implements Command {
     if (!fs.existsSync(join(this.src, this.file)) || !fs.lstatSync(join(this.src, this.file)).isFile()) {
       throw new Error('Can only copy files');
     }
-    /*if (!fs.existsSync(this.dest)) {
-      throw new Error(`Dest does not exist: ${this.dest}`);
-    }*/
-  }
-
-  public describe(): void {
     if (!fs.existsSync(join(this.dest, dirname(this.file)))) {
       fs.mkdirSync(join(this.dest, dirname(this.file)), {recursive: true});
     }
+  }
+
+  public describe(): void {
     console.log('> CopyCommand');
     console.log(`   ${colors.cyan(join(this.src, this.file))}`);
     console.log(`   -> ${colors.green(join(this.dest, this.file))}`);
@@ -77,5 +67,40 @@ export class CopyCommand implements Command {
   public async execute(): Promise<number> {
     fs.copyFileSync(join(this.src, this.file), join(this.dest, this.file));
     return 0;
+  }
+}
+
+export class BulkCopyCommand implements Command {
+  public src: string;
+  public dest: string;
+  public files: string[];
+
+  public constructor(src: string, dest: string, files: string[]) {
+    this.src = src;
+    this.dest = dest;
+    this.files = files;
+    for (const file of files) {
+      if (!fs.existsSync(join(this.dest, dirname(file)))) {
+        fs.mkdirSync(join(this.dest, dirname(file)), {recursive: true});
+      }
+    }
+  }
+
+  public describe(): void {
+    console.log('> BulkCopyCommand');
+    for (const file of this.files) {
+      console.log(`   ${colors.cyan(join(this.src, file))}`);
+      console.log(`   -> ${colors.green(join(this.dest, file))}`);
+    }
+  }
+
+  public execute(): Promise<number> {
+    return new Promise((resolve) => {
+      const promises = [];
+      for (const file of this.files) {
+        promises.push(fs.promises.copyFile(join(this.src, file), join(this.dest, file)));
+      }
+      Promise.all(promises).then(() => resolve(0));
+    });
   }
 }
