@@ -84,7 +84,8 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, publ
         });
         console.log();
         if (child.status !== 0) {
-          console.log(`> ${colors.red('ERR')} Failed to run npm publish, please review the output above.`);
+          console.error(`> ${colors.red('ERR')} Failed to run npm publish, please review the output above.`);
+          process.exitCode = 1;
         }
         else {
           console.log(`> ${colors.green('PUBLISHED')}`);
