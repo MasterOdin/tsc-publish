@@ -6,7 +6,7 @@ import {
 } from '../src/command';
 
 jest.mock('child_process');
-import child_process from 'child_process';
+import childProcess from 'child_process';
 import { existsSync, writeFileSync } from 'fs';
 import colors from 'ansi-colors';
 import { join } from 'path';
@@ -14,13 +14,15 @@ import temp from 'temp';
 
 temp.track();
 
-const mockSpawn = (child_process.spawn as jest.Mock);
+const mockSpawn = (childProcess.spawn as jest.Mock);
 
 const consoleLog = console.log;
 let consoleOutput: string[];
 beforeAll(() => {
   colors.enabled = false;
-  console.log = (msg: string) => consoleOutput.push(msg);
+  console.log = (msg: string): void => {
+    consoleOutput.push(msg);
+  };
 });
 beforeEach(() => consoleOutput = []);
 afterAll(() => {
@@ -35,16 +37,18 @@ describe('ExecCommand', () => {
     expect(consoleOutput.length).toBe(2);
     expect(consoleOutput[0]).toBe('> ExecCommand');
     expect(consoleOutput[1]).toBe('>   test_command');
-    command.execute().then((exitCode) => {
+    command.execute().then((exitCode): void => {
       expect(exitCode).toEqual(0);
       expect(mockSpawn.mock.calls.length).toStrictEqual(1);
-      expect(mockSpawn.mock.calls[0][0]).toStrictEqual('test_command');
-      expect(mockSpawn.mock.calls[0][1]).toStrictEqual([]);
-      expect(mockSpawn.mock.calls[0][2]).toStrictEqual({
+      expect((mockSpawn.mock.calls[0] as unknown[])[0]).toStrictEqual('test_command');
+      expect((mockSpawn.mock.calls[0] as unknown[])[1]).toStrictEqual([]);
+      expect((mockSpawn.mock.calls[0] as unknown[])[2]).toStrictEqual({
         stdio: 'inherit',
         cwd: '/cwd/directory',
       });
       done();
+    }).catch((err) => {
+      done(err);
     });
   });
 });
@@ -56,9 +60,11 @@ describe('NpmCommand', () => {
     expect(consoleOutput.length).toBe(2);
     expect(consoleOutput[0]).toBe('> ExecCommand');
     expect(consoleOutput[1]).toBe('>   npm run build');
-    command.execute().then((exitCode) => {
+    command.execute().then((exitCode): void => {
       expect(exitCode).toEqual(0);
       done();
+    }).catch((err) => {
+      done(err);
     });
   });
 });
@@ -80,11 +86,13 @@ describe('CopyCommand', () => {
     expect(consoleOutput[0]).toBe('> CopyCommand');
     expect(consoleOutput[1]).toBe(`   ${join(src, 'test')}`);
     expect(consoleOutput[2]).toBe(`   -> ${join(dst, 'test')}`);
-    command.execute().then((exitCode) => {
+    command.execute().then((exitCode): void => {
       expect(exitCode).toBe(0);
       expect(existsSync(join(src, 'test'))).toBe(true);
       expect(existsSync(join(dst, 'test'))).toBe(true);
       done();
+    }).catch((err) => {
+      done(err);
     });
   });
 
@@ -118,7 +126,7 @@ describe('BulkCopyCommand', () => {
     const command = new BulkCopyCommand(src, dst, ['test1', 'test2']);
     command.describe();
     expect(consoleOutput.length).toBe(5);
-    command.execute().then((exitCode) => {
+    command.execute().then((exitCode): void => {
       expect(exitCode).toBe(0);
       expect(existsSync(join(src, 'test1'))).toBe(true);
       expect(existsSync(join(dst, 'test1'))).toBe(true);
@@ -127,6 +135,8 @@ describe('BulkCopyCommand', () => {
       expect(existsSync(join(src, 'test3'))).toBe(true);
       expect(existsSync(join(dst, 'test3'))).toBe(false);
       done();
+    }).catch((err) => {
+      done(err);
     });
   });
 });

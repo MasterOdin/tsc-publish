@@ -1,6 +1,6 @@
-import { EventEmitter } from "events";
+import { EventEmitter } from 'events';
 
-const childProcess = (jest.createMockFromModule('child_process') as Record<string, unknown>);
+const childProcess: Record<string, unknown> = jest.createMockFromModule('child_process');
 
 class SpawnedProcess extends EventEmitter {
   public constructor() {

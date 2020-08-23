@@ -12,7 +12,9 @@ export interface Command {
 
 export class ExecCommand implements Command {
   public command: string;
+
   public args: string[];
+
   public cwd: string;
 
   public constructor(cwd: string, command: string, args: string[] = []) {
@@ -45,8 +47,11 @@ export class NpmRunCommand extends ExecCommand {
 
 export class CopyCommand implements Command {
   public file: string;
+
   public src: string;
+
   public dest: string;
+
   public constructor(src: string, dest: string, file: string) {
     this.file = file;
     this.src = src;
@@ -62,18 +67,20 @@ export class CopyCommand implements Command {
     console.log(`   -> ${colors.green(join(this.dest, this.file))}`);
   }
 
-  public async execute(): Promise<number> {
+  public execute(): Promise<number> {
     if (!fs.existsSync(join(this.dest, dirname(this.file)))) {
       fs.mkdirSync(join(this.dest, dirname(this.file)), {recursive: true});
     }
     fs.copyFileSync(join(this.src, this.file), join(this.dest, this.file));
-    return 0;
+    return Promise.resolve(0);
   }
 }
 
 export class BulkCopyCommand implements Command {
   public src: string;
+
   public dest: string;
+
   public files: string[];
 
   public constructor(src: string, dest: string, files: string[]) {
@@ -91,7 +98,7 @@ export class BulkCopyCommand implements Command {
   }
 
   public execute(): Promise<number> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const promises = [];
       for (const file of this.files) {
         if (!fs.existsSync(join(this.dest, dirname(file)))) {
@@ -99,7 +106,7 @@ export class BulkCopyCommand implements Command {
         }
         promises.push(fs.promises.copyFile(join(this.src, file), join(this.dest, file)));
       }
-      Promise.all(promises).then(() => resolve(0));
+      Promise.all(promises).then(() => resolve(0)).catch((err) => reject(err));
     });
   }
 }

@@ -10,17 +10,15 @@ describe('getCommands', () => {
   });
 
   test('different outDir', () => {
-    expect(getCommands(cwd, resolve(cwd, 'out'), {}, {})).toEqual([
-      new BulkCopyCommand(cwd, resolve(cwd, 'out'), ['README.md']),
-    ]);
+    expect(getCommands(cwd, resolve(cwd, 'out'), {}, {})).toEqual([new BulkCopyCommand(cwd, resolve(cwd, 'out'), ['README.md'])]);
   });
 
   test('package.json scripts', () => {
     const packageJson = {
       scripts: {
-        lint: "eslint",
-        test: "jest",
-        build: "tsc",
+        lint: 'eslint',
+        test: 'jest',
+        build: 'tsc',
       },
     };
     expect(getCommands(cwd, cwd, packageJson, {})).toEqual([
@@ -33,9 +31,9 @@ describe('getCommands', () => {
   test('.publisherrc steps', () => {
     const packageJson = {
       scripts: {
-        lint: "eslint",
-        test: "jest",
-        build: "tsc",
+        lint: 'eslint',
+        test: 'jest',
+        build: 'tsc',
       },
     };
     expect(getCommands(cwd, cwd, packageJson, {steps: ['lint', 'test', 'tsc']})).toEqual([
@@ -48,36 +46,30 @@ describe('getCommands', () => {
   test('typescript devDependency', () => {
     const packageJson = {
       devDependencies: {
-        typescript: "^3.9",
+        typescript: '^3.9',
       },
     };
-    expect(getCommands(cwd, cwd, packageJson, {})).toEqual([
-      new ExecCommand(cwd, './node_modules/.bin/tsc'),
-    ]);
+    expect(getCommands(cwd, cwd, packageJson, {})).toEqual([new ExecCommand(cwd, './node_modules/.bin/tsc')]);
   });
 
   test('typescript dependency', () => {
     const packageJson = {
       dependencies: {
-        typescript: "^3.9",
+        typescript: '^3.9',
       },
     };
-    expect(getCommands(cwd, cwd, packageJson, {})).toEqual([
-      new ExecCommand(cwd, './node_modules/.bin/tsc'),
-    ]);
+    expect(getCommands(cwd, cwd, packageJson, {})).toEqual([new ExecCommand(cwd, './node_modules/.bin/tsc')]);
   });
 
   test('checks disabled', () => {
     const packageJson = {
       scripts: {
-        lint: "eslint",
-        test: "jest",
-        build: "tsc",
+        lint: 'eslint',
+        test: 'jest',
+        build: 'tsc',
       },
     };
-    expect(getCommands(cwd, cwd, packageJson, {}, false)).toEqual([
-      new NpmRunCommand(cwd, 'build'),
-    ]);
+    expect(getCommands(cwd, cwd, packageJson, {}, false)).toEqual([new NpmRunCommand(cwd, 'build')]);
   });
 
   test.each([
@@ -90,9 +82,7 @@ describe('getCommands', () => {
     const packageJson: PackageJson = {};
     packageJson.scripts = {};
     packageJson.scripts[command] = 'foo';
-    expect(getCommands(cwd, cwd, packageJson, {})).toEqual([
-      new NpmRunCommand(cwd, command),
-    ]);
+    expect(getCommands(cwd, cwd, packageJson, {})).toEqual([new NpmRunCommand(cwd, command)]);
   });
 
   test.each([
@@ -103,9 +93,7 @@ describe('getCommands', () => {
     const packageJson: PackageJson = {};
     packageJson.scripts = {};
     packageJson.scripts[command] = 'foo';
-    expect(getCommands(cwd, cwd, packageJson, {})).toEqual([
-      new NpmRunCommand(cwd, command),
-    ]);
+    expect(getCommands(cwd, cwd, packageJson, {})).toEqual([new NpmRunCommand(cwd, command)]);
   });
 
   test('empty package directory', () => {
