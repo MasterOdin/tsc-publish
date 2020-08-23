@@ -2,6 +2,7 @@
 
 import { spawnSync } from 'child_process';
 import fs from 'fs';
+import { join } from 'path';
 import { resolve } from 'path';
 import colors from 'ansi-colors';
 import program from 'commander';
@@ -98,7 +99,15 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, publ
   });
 }
 
-program.version('0.5.2');
+let version: string;
+if (fs.existsSync(join(__dirname, 'package.json'))) {
+  version = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), {encoding: 'utf-8'})).version;
+}
+else {
+  version = JSON.parse(fs.readFileSync(join(__dirname, '..', 'package.json'), {encoding: 'utf-8'})).version;
+}
+
+program.version(version);
 
 program
   .option('--dryrun, --dry-run', 'Do a dry-run of publisher without publishing')
