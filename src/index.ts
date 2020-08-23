@@ -104,15 +104,15 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, publ
   });
 }
 
-let version: string;
+let filePath: string;
 if (fs.existsSync(join(__dirname, 'package.json'))) {
-  version = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), {encoding: 'utf-8'})).version;
+  filePath = join(__dirname, 'package.json');
 }
 else {
-  version = JSON.parse(fs.readFileSync(join(__dirname, '..', 'package.json'), {encoding: 'utf-8'})).version;
+  filePath = join(__dirname, '..', 'package.json');
 }
 
-program.version(version);
+program.version((JSON.parse(fs.readFileSync(filePath, {encoding: 'utf-8'})) as {version: string}).version);
 
 program
   .option('--init', 'Initialize publisher for repository')
