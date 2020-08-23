@@ -23,7 +23,8 @@ export class ExecCommand implements Command {
 
   public describe(): void {
     console.log('> ExecCommand');
-    console.log(`>   ${colors.cyan(`${this.command} ${this.args.join(' ')}`)}`);
+    const command = `${this.command} ${this.args.join(' ')}`.trimRight();
+    console.log(`>   ${colors.cyan(command)}`);
   }
 
   public execute(): Promise<number> {

@@ -31,37 +31,41 @@ async function runCommands(commands: Command[]): Promise<void> {
   }
 }
 
-function runner(cwd: string, packagePath: string, packageJson: PackageJson, publisherRc: PublisherConfig, tsconfig: TsConfigJson): void {
-  if (program.postInstall) {
-    if (!packageJson.scripts) {
-      packageJson.scripts = {};
-    }
-
-    let modified = false;
-
-    if (packageJson.scripts['prepublishOnly']) {
-      console.log('prepublishOnly already exists, doing nothing');
-    }
-    else {
-      console.log('Adding prepublishOnly to prevent npm-publish');
-      packageJson.scripts['prepublishOnly'] = 'echo "Do not run publish directly, run publisher" && exit 1';
-      modified = true;
-    }
-
-    if (!packageJson.scripts['publisher']) {
-      console.log('Adding publisher script');
-      packageJson.scripts['publisher'] = 'publisher';
-      modified = true;
-    }
-
-    if (modified) {
-      console.log(`Writing out modified package.json to ${packagePath}`);
-      fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
-    }
-
-    process.exit();
+function init(cwd: string, packageJson: PackageJson): void {
+  if (!packageJson.scripts) {
+    packageJson.scripts = {};
   }
 
+  let modified = false;
+
+  if (packageJson.scripts['prepublishOnly']) {
+    console.log('prepublishOnly already exists, doing nothing');
+  }
+  else {
+    console.log('Adding prepublishOnly to prevent npm-publish');
+    packageJson.scripts['prepublishOnly'] = 'echo "Do not run publish directly, run publisher" && exit 1';
+    modified = true;
+  }
+
+  if (!packageJson.scripts['publisher']) {
+    console.log('Adding publisher script');
+    packageJson.scripts['publisher'] = 'publisher';
+    modified = true;
+  }
+
+  fs.writeFileSync(join(cwd, '.publisherrc.js'), `{
+    // "steps": [],     // list of steps to run, defaults to lint, run, build
+    // "outDir": "",    // directory to publish
+    // "publish": true  // whether to run npm publish or not at end
+}`);
+
+  if (modified) {
+    console.log(`Writing out modified package.json to ${packagePath}`);
+    fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+  }
+}
+
+function runner(cwd: string, packagePath: string, packageJson: PackageJson, publisherRc: PublisherConfig, tsconfig: TsConfigJson): void {
   const outDir = publisherRc.outDir || tsconfig.compilerOptions?.outDir || cwd;
 
   runCommands(getCommands(cwd, outDir, packageJson, publisherRc, program.checks)).then((): void => {
@@ -111,8 +115,8 @@ else {
 program.version(version);
 
 program
+  .option('--init', 'Initialize publisher for repository')
   .option('--dryrun, --dry-run', 'Do a dry-run of publisher without publishing')
-  .option('--postinstall, --post-install', 'Run post-install step for publisher')
   .option('--no-checks', 'Will not run lint or test steps');
 
 program.parse(process.argv);
@@ -151,7 +155,12 @@ catch (exc) {
 }
 
 if (packageJson && tsconfig) {
-  runner(cwd, packagePath, packageJson, publisherRc, tsconfig);
+  if (program.postInstall) {
+    init(cwd, packageJson);
+  }
+  else {
+    runner(cwd, packagePath, packageJson, publisherRc, tsconfig);
+  }
 }
 else {
   console.error('Failed to load package.json or tsconfig.json');
