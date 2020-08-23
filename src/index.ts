@@ -96,6 +96,7 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, publ
   }).catch((err): void => {
     console.log();
     console.error(`${err.message}.`);
+    process.exitCode = 1;
   });
 }
 
