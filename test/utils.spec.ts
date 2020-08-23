@@ -64,7 +64,7 @@ const filterTestCases = [
 ];
 
 describe.each(filterTestCases)('shouldIncludeFile', (entry, outDir, expected): void => {
-  test(`should ${expected ? 'include' : 'exclude'} file ${entry}`, (): void => {
+  test(`should ${expected ? 'include' : 'exclude'} file ${entry as string}`, (): void => {
     expect(shouldIncludeFile((entry as string), (outDir as string))).toEqual(expected);
   });
 });

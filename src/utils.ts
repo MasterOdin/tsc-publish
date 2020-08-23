@@ -93,7 +93,7 @@ export function getNonSrcFiles(path: string, outDir?: string): string[] {
  * as for trailing commas.
  * @param path
  */
-export function parseTsConfig(path: string): any { // eslint-disable-line @typescript-eslint/no-explicit-any
+export function parseTsConfig(path: string): unknown {
   const trailingCommaRegex = /,(?=\s*?[}\]])/g;
   return JSON.parse(stripJsonComments(fs.readFileSync(path, {encoding: 'utf8'})).replace(trailingCommaRegex, ''));
 }

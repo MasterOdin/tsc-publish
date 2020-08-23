@@ -97,7 +97,7 @@ function runner(cwd: string, packagePath: string, packageJson: PackageJson, publ
         }
       }
     }
-  }).catch((err): void => {
+  }).catch((err: Error): void => {
     console.log();
     console.error(`${err.message}.`);
     process.exitCode = 1;
@@ -125,15 +125,15 @@ program.parse(process.argv);
 let cwd = process.env.INIT_CWD ? process.env.INIT_CWD : process.cwd();
 while (!fs.existsSync(resolve(cwd, 'package.json'))) {
   if (cwd === resolve(cwd, '..')) {
-    throw new Error("Could not find package.json file");
+    throw new Error('Could not find package.json file');
   }
   cwd = resolve(cwd, '..');
 }
 
 const packagePath = resolve(cwd, 'package.json');
-let packageJson: PackageJson | undefined = undefined;
+let packageJson: PackageJson;
 try {
-  packageJson = JSON.parse(stripJsonComments(fs.readFileSync(packagePath, {encoding: 'utf8'})));
+  packageJson = JSON.parse(stripJsonComments(fs.readFileSync(packagePath, {encoding: 'utf8'}))) as PackageJson;
 }
 catch (exc) {
   console.error('Failed to parse package.json file');
@@ -142,12 +142,12 @@ catch (exc) {
 
 let publisherRc: PublisherConfig = {};
 if (fs.existsSync(resolve(cwd, '.publisherrc'))) {
-  publisherRc = JSON.parse(stripJsonComments(fs.readFileSync(resolve(cwd, '.publisherrc'), {encoding: 'utf8'})));
+  publisherRc = JSON.parse(stripJsonComments(fs.readFileSync(resolve(cwd, '.publisherrc'), {encoding: 'utf8'}))) as PublisherConfig;
 }
 
-let tsconfig: TsConfigJson | undefined = undefined;
+let tsconfig: TsConfigJson;
 try {
-  tsconfig = parseTsConfig(resolve(cwd, 'tsconfig.json'));
+  tsconfig = parseTsConfig(resolve(cwd, 'tsconfig.json')) as TsConfigJson;
 }
 catch (exc) {
   console.error('Failed to parse tsconfig.json file');
