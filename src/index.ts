@@ -128,7 +128,7 @@ catch (exc) {
 
 if (packageJson && tsconfig) {
   if (program.init) {
-    init(cwd, packagePath, packageJson);
+    init(cwd, packagePath);
   }
   else {
     runner(cwd, packageJson, publisherRc, tsconfig);
