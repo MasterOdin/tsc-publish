@@ -47,6 +47,40 @@ describe('getCommands', () => {
     ]);
   });
 
+  test('package.json publisherrc steps', () => {
+    const packageJson = {
+      scripts: {
+        lint: 'eslint',
+        test: 'jest',
+        build: 'tsc',
+      },
+      publisherrc: {
+        steps: ['lint', 'test'],
+      },
+    };
+    expect(getCommands(cwd, cwd, packageJson, {})).toEqual([
+      new NpmRunCommand(cwd, 'lint'),
+      new NpmRunCommand(cwd, 'test'),
+    ]);
+  });
+
+  test('.publisherrc takes precedence over package.json publisherrc', () => {
+    const packageJson = {
+      scripts: {
+        lint: 'eslint',
+        test: 'jest',
+        build: 'tsc',
+      },
+      publisherrc: {
+        steps: ['lint, test'],
+      },
+    };
+    expect(getCommands(cwd, cwd, packageJson, {steps: ['lint', 'build']})).toEqual([
+      new NpmRunCommand(cwd, 'lint'),
+      new NpmRunCommand(cwd, 'build'),
+    ]);
+  });
+
   test('typescript devDependency', () => {
     const packageJson = {
       devDependencies: {

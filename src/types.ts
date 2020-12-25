@@ -6,6 +6,7 @@ export interface PackageJson {
   bin?: {[key: string]: string};
   main?: string;
   types?: string;
+  publisherrc?: PublisherConfig;
 }
 
 export interface PublisherConfig {

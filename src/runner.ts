@@ -8,8 +8,9 @@ export function getCommands(cwd: string, outDir: string, packageJson: PackageJso
   const commands: Command[] = [];
   let buildStepFound = false;
 
-  if (publisherRc.steps) {
-    for (const step of publisherRc.steps) {
+  if (publisherRc.steps || packageJson.publisherrc?.steps) {
+    const steps = (publisherRc.steps || packageJson.publisherrc?.steps) as string[];
+    for (const step of steps) {
       if (packageJson.scripts && packageJson.scripts[step]) {
         commands.push(new NpmRunCommand(cwd, step));
       }
