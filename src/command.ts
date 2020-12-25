@@ -125,7 +125,7 @@ export class DeleteCommand implements Command {
 
   public describe(): void {
     console.log('> DeleteCommand');
-    console.log(`    ${this.dir}`);
+    console.log(`    ${colors.cyan(this.dir)}`);
   }
 
   public execute(): Promise<number> {
