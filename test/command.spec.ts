@@ -7,7 +7,7 @@ import {
 
 jest.mock('child_process');
 import childProcess from 'child_process';
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync, mkdirSync } from 'fs';
 import colors from 'ansi-colors';
 import { join } from 'path';
 import temp from 'temp';
@@ -96,6 +96,25 @@ describe('CopyCommand', () => {
     });
   });
 
+  test('copy file with directory create', (done) => {
+    mkdirSync(join(src, 'test'));
+    writeFileSync(join(src, 'test', 'hello'), 'hello world');
+    const command = new CopyCommand(src, dst, 'test/hello');
+    command.describe();
+    expect(consoleOutput.length).toBe(3);
+    expect(consoleOutput[0]).toBe('> CopyCommand');
+    expect(consoleOutput[1]).toBe(`   ${join(src, 'test', 'hello')}`);
+    expect(consoleOutput[2]).toBe(`   -> ${join(dst, 'test', 'hello')}`);
+    command.execute().then((exitCode): void => {
+      expect(exitCode).toBe(0);
+      expect(existsSync(join(src, 'test', 'hello'))).toBe(true);
+      expect(existsSync(join(dst, 'test', 'hello'))).toBe(true);
+      done();
+    }).catch((err) => {
+      done(err);
+    });
+  });
+
   test('file does not exist', () => {
     expect.assertions(2);
 
@@ -122,10 +141,12 @@ describe('BulkCopyCommand', () => {
     writeFileSync(join(src, 'test1'), 'hello');
     writeFileSync(join(src, 'test2'), 'world');
     writeFileSync(join(src, 'test3'), 'friend');
+    mkdirSync(join(src, 'test'));
+    writeFileSync(join(src, 'test', 'hello'), 'true');
 
-    const command = new BulkCopyCommand(src, dst, ['test1', 'test2']);
+    const command = new BulkCopyCommand(src, dst, ['test1', 'test2', 'test/hello']);
     command.describe();
-    expect(consoleOutput.length).toBe(5);
+    expect(consoleOutput.length).toBe(7);
     command.execute().then((exitCode): void => {
       expect(exitCode).toBe(0);
       expect(existsSync(join(src, 'test1'))).toBe(true);
@@ -134,6 +155,8 @@ describe('BulkCopyCommand', () => {
       expect(existsSync(join(src, 'test2'))).toBe(true);
       expect(existsSync(join(src, 'test3'))).toBe(true);
       expect(existsSync(join(dst, 'test3'))).toBe(false);
+      expect(existsSync(join(src, 'test', 'hello'))).toBe(true);
+      expect(existsSync(join(dst, 'test', 'hello'))).toBe(true);
       done();
     }).catch((err) => {
       done(err);
