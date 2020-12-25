@@ -1,7 +1,7 @@
 {
   "name": "@masterodin/publisher",
-  "version": "0.6.0",
-  "description": "Utility to help publish minimal typescript based packages",
+  "version": "0.7.0",
+  "description": "Utility to help publish minimal compiled packages",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
