@@ -20,7 +20,6 @@ interface TsConfigJson {
 
 async function runCommands(commands: Command[]): Promise<void> {
   for (const command of commands) {
-    console.log('> Running Command');
     command.describe();
     const code = await command.execute();
     if (code !== 0) {
