@@ -7,7 +7,7 @@ import colors from 'ansi-colors';
 import program from 'commander';
 import stripJsonComments from 'strip-json-comments';
 
-import { Command, NpmCommand } from './command';
+import { DeleteCommand, NpmCommand, Command } from './command';
 import { getCommands, init } from './runner';
 import { PackageJson, PublisherConfig } from './types';
 import { modifyPackageJson, parseTsConfig } from './utils';
@@ -33,7 +33,11 @@ async function runCommands(commands: Command[]): Promise<void> {
 function runner(cwd: string, packageJson: PackageJson, publisherRc: PublisherConfig, tsconfig: TsConfigJson): void {
   const outDir = publisherRc.outDir || tsconfig.compilerOptions?.outDir || cwd;
 
-  runCommands(getCommands(cwd, outDir, packageJson, publisherRc, program.checks)).then((): void => {
+  const commands = getCommands(cwd, outDir, packageJson, publisherRc, program.checks);
+  if (publisherRc.clean !== false) {
+    commands.unshift(new DeleteCommand(outDir));
+  }
+  runCommands(commands).then((): void => {
     console.log('> Finished All Commands');
     if (tsconfig && tsconfig.compilerOptions && tsconfig.compilerOptions.outDir) {
       console.log(`> Copying and fixing package.json into ${tsconfig.compilerOptions.outDir}`);

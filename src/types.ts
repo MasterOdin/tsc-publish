@@ -12,4 +12,5 @@ export interface PublisherConfig {
   steps?: string[];
   outDir?: string;
   publish?: boolean;
+  clean?: boolean;
 }

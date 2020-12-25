@@ -3,7 +3,7 @@ import fs from 'fs';
 import { join, dirname } from 'path';
 
 import colors from 'ansi-colors';
-
+import rimraf from 'rimraf';
 
 export interface Command {
   describe(): void;
@@ -112,6 +112,30 @@ export class BulkCopyCommand implements Command {
         promises.push(fs.promises.copyFile(join(this.src, file), join(this.dest, file)));
       }
       Promise.all(promises).then(() => resolve(0)).catch((err) => reject(err));
+    });
+  }
+}
+
+export class DeleteCommand implements Command {
+  public dir: string;
+
+  public constructor(dir: string) {
+    this.dir = dir;
+  }
+
+  public describe(): void {
+    console.log('> DeleteCommand');
+    console.log(`    ${this.dir}`);
+  }
+
+  public execute(): Promise<number> {
+    return new Promise((resolve, reject) => {
+      rimraf(this.dir, {glob: false}, (err: Error) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve(0);
+      });
     });
   }
 }
