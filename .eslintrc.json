@@ -1,5 +1,6 @@
 {
   "extends": [
     "@masterodin/eslint-config-typescript"
-  ]
+  ],
+  "ignorePatterns": ["jest.config.js"]
 }
