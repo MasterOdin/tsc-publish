@@ -39,9 +39,14 @@ export class ExecCommand implements Command {
   }
 }
 
-export class NpmRunCommand extends ExecCommand {
+export class NpmCommand extends ExecCommand {
   public constructor(cwd: string, command: string, args: string[] = []) {
-    super(cwd, 'npm', ['run', command].concat(args));
+    super(cwd, 'npm', [command, ...args]);
+  }
+}
+export class NpmRunCommand extends NpmCommand {
+  public constructor(cwd: string, command: string, args: string[] = []) {
+    super(cwd, 'run', [command, ...args]);
   }
 }
 

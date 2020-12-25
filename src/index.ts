@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { spawnSync } from 'child_process';
 import fs from 'fs';
 import { join } from 'path';
 import { resolve } from 'path';
@@ -8,7 +7,7 @@ import colors from 'ansi-colors';
 import program from 'commander';
 import stripJsonComments from 'strip-json-comments';
 
-import { Command } from './command';
+import { Command, NpmCommand } from './command';
 import { getCommands, init } from './runner';
 import { PackageJson, PublisherConfig } from './types';
 import { modifyPackageJson, parseTsConfig } from './utils';
@@ -44,23 +43,26 @@ function runner(cwd: string, packageJson: PackageJson, publisherRc: PublisherCon
     }
 
     if (publisherRc.publish !== false) {
+      console.log();
       if (program.dryRun) {
-        console.log();
         console.log(`> ${colors.yellow('Dry-run enabled, not running npm-publish')}`);
       }
       else {
-        const child = spawnSync('npm', ['publish'], {
-          cwd: resolve(cwd, 'dist'),
-          stdio: 'inherit',
-        });
-        console.log();
-        if (child.status !== 0) {
+        const publishCommand = new NpmCommand(resolve(cwd, 'dist'), 'publish');
+        publishCommand.describe();
+        publishCommand.execute().then((exitCode: number) => {
+          if (exitCode !== 0) {
+            console.error(`> ${colors.red('ERR')} Failed to run npm publish, please review the output above.`);
+            process.exitCode = exitCode;
+          }
+          else {
+            console.log(`> ${colors.green('PUBLISHED')}`);
+          }
+        }).catch((err) => {
+          console.error(err);
           console.error(`> ${colors.red('ERR')} Failed to run npm publish, please review the output above.`);
           process.exitCode = 1;
-        }
-        else {
-          console.log(`> ${colors.green('PUBLISHED')}`);
-        }
+        });
       }
     }
   }).catch((err: Error): void => {
