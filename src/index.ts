@@ -9,7 +9,7 @@ import program from 'commander';
 import stripJsonComments from 'strip-json-comments';
 
 import { Command } from './command';
-import { getCommands } from './runner';
+import { getCommands, init } from './runner';
 import { PackageJson, PublisherConfig } from './types';
 import { modifyPackageJson, parseTsConfig } from './utils';
 
@@ -31,41 +31,7 @@ async function runCommands(commands: Command[]): Promise<void> {
   }
 }
 
-function init(cwd: string, packageJson: PackageJson): void {
-  if (!packageJson.scripts) {
-    packageJson.scripts = {};
-  }
-
-  let modified = false;
-
-  if (packageJson.scripts['prepublishOnly']) {
-    console.log('prepublishOnly already exists, doing nothing');
-  }
-  else {
-    console.log('Adding prepublishOnly to prevent npm-publish');
-    packageJson.scripts['prepublishOnly'] = 'echo "Do not run publish directly, run publisher" && exit 1';
-    modified = true;
-  }
-
-  if (!packageJson.scripts['publisher']) {
-    console.log('Adding publisher script');
-    packageJson.scripts['publisher'] = 'publisher';
-    modified = true;
-  }
-
-  fs.writeFileSync(join(cwd, '.publisherrc.js'), `{
-    // "steps": [],     // list of steps to run, defaults to lint, run, build
-    // "outDir": "",    // directory to publish
-    // "publish": true  // whether to run npm publish or not at end
-}`);
-
-  if (modified) {
-    console.log(`Writing out modified package.json to ${packagePath}`);
-    fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
-  }
-}
-
-function runner(cwd: string, packagePath: string, packageJson: PackageJson, publisherRc: PublisherConfig, tsconfig: TsConfigJson): void {
+function runner(cwd: string, packageJson: PackageJson, publisherRc: PublisherConfig, tsconfig: TsConfigJson): void {
   const outDir = publisherRc.outDir || tsconfig.compilerOptions?.outDir || cwd;
 
   runCommands(getCommands(cwd, outDir, packageJson, publisherRc, program.checks)).then((): void => {
@@ -133,7 +99,10 @@ while (!fs.existsSync(resolve(cwd, 'package.json'))) {
 const packagePath = resolve(cwd, 'package.json');
 let packageJson: PackageJson;
 try {
-  packageJson = JSON.parse(stripJsonComments(fs.readFileSync(packagePath, {encoding: 'utf8'}))) as PackageJson;
+  packageJson = JSON.parse(stripJsonComments(fs.readFileSync(
+    packagePath,
+    {encoding: 'utf8'},
+  ))) as PackageJson;
 }
 catch (exc) {
   console.error('Failed to parse package.json file');
@@ -142,7 +111,10 @@ catch (exc) {
 
 let publisherRc: PublisherConfig = {};
 if (fs.existsSync(resolve(cwd, '.publisherrc'))) {
-  publisherRc = JSON.parse(stripJsonComments(fs.readFileSync(resolve(cwd, '.publisherrc'), {encoding: 'utf8'}))) as PublisherConfig;
+  publisherRc = JSON.parse(stripJsonComments(fs.readFileSync(
+    resolve(cwd, '.publisherrc'),
+    {encoding: 'utf8'},
+  ))) as PublisherConfig;
 }
 
 let tsconfig: TsConfigJson;
@@ -155,11 +127,11 @@ catch (exc) {
 }
 
 if (packageJson && tsconfig) {
-  if (program.postInstall) {
-    init(cwd, packageJson);
+  if (program.init) {
+    init(cwd, packagePath, packageJson);
   }
   else {
-    runner(cwd, packagePath, packageJson, publisherRc, tsconfig);
+    runner(cwd, packageJson, publisherRc, tsconfig);
   }
 }
 else {

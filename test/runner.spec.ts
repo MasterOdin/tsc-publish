@@ -1,7 +1,11 @@
-import { resolve } from 'path';
-import { getCommands } from '../src/runner';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { join, resolve } from 'path';
+import temp from 'temp';
+import { getCommands, init } from '../src/runner';
 import { BulkCopyCommand, NpmRunCommand, ExecCommand } from '../src/command';
 import { PackageJson } from '../src/types';
+
+temp.track();
 
 const cwd = resolve(__dirname, 'test_files', 'test_flat_package');
 describe('getCommands', () => {
@@ -103,5 +107,51 @@ describe('getCommands', () => {
       {},
       {},
     )).toEqual([]);
+  });
+});
+
+describe('init', (): void => {
+  beforeAll(() => {
+    jest.spyOn(console, 'log').mockImplementation(jest.fn());
+  });
+
+  test('edit package.json and create publisherrc', () => {
+    const cwd = temp.mkdirSync();
+    const packagePath = join(cwd, 'package.json');
+    writeFileSync(packagePath, '{}');
+    init(cwd, packagePath);
+    const packageJson = JSON.parse(readFileSync(
+      packagePath,
+      {encoding: 'utf8'},
+    )) as PackageJson;
+    expect(packageJson).toEqual({
+      scripts: {
+        prepublishOnly: 'echo "Do not run publish directly, run publisher" && exit 1',
+        publisher: 'publisher',
+      },
+    });
+    expect(existsSync(join(cwd, '.publisherrc.json'))).toBe(true);
+  });
+
+  test('do not overwrite existing prepublishOnly and publisher fields', () => {
+    const cwd = temp.mkdirSync();
+    const packagePath = join(cwd, 'package.json');
+    writeFileSync(packagePath, JSON.stringify({
+      scripts: {
+        prepublishOnly: 'test',
+        publisher: 'exit 1',
+      },
+    }));
+    init(cwd, packagePath);
+    const packageJson = JSON.parse(readFileSync(
+      packagePath,
+      {encoding: 'utf8'},
+    )) as PackageJson;
+    expect(packageJson).toEqual({
+      scripts: {
+        prepublishOnly: 'test',
+        publisher: 'exit 1',
+      },
+    });
   });
 });
