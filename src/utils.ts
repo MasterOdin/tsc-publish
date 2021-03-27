@@ -42,7 +42,13 @@ export function modifyPackageJson(packageJson: PackageJson, outDir: string): Pac
 
   // Remove block for running npm publish
   if (packageJson.scripts) {
-    delete packageJson.scripts['prepublishOnly'];
+    delete packageJson.scripts.prepublishOnly;
+    if (packageJson.scripts.prepare) {
+      packageJson.scripts.prepare = packageJson.scripts.prepare.replace(/(husky install(?: && )?| && husky install)/, '');
+      if (packageJson.scripts.prepare === '') {
+        delete packageJson.scripts.prepare;
+      }
+    }
   }
   delete packageJson.devDependencies;
   return packageJson;

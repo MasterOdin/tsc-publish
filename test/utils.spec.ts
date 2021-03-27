@@ -34,9 +34,33 @@ describe.each(testCases)('modifyPackageJson', (input, outDir): void => {
 });
 
 describe('modifyPackageJson', (): void => {
-  test('test that prepublishOnly and devDependencies are deleted', (): void => {
+  test('that prepublishOnly and devDependencies are deleted', (): void => {
     const test = {devDependencies: {}, scripts: {prepublishOnly: 'test', test: 'foo'}};
     const expected = {scripts: {test: 'foo'}};
+    expect(modifyPackageJson(test, '')).toEqual(expected);
+  });
+
+  test('that prepare with only husky is deleted', (): void => {
+    const test = {scripts: {prepare: 'husky install'}};
+    const expected = {scripts: {}};
+    expect(modifyPackageJson(test, '')).toEqual(expected);
+  });
+
+  test('that prepare with leading husky is stripped', (): void => {
+    const test = {scripts: {prepare: 'husky install && npm run build'}};
+    const expected = {scripts: {prepare: 'npm run build'}};
+    expect(modifyPackageJson(test, '')).toEqual(expected);
+  });
+
+  test('that prepare with husky in middle is stripped', (): void => {
+    const test = {scripts: {prepare: 'npm run action && husky install && npm run build'}};
+    const expected = {scripts: {prepare: 'npm run action && npm run build'}};
+    expect(modifyPackageJson(test, '')).toEqual(expected);
+  });
+
+  test('that prepare with following husky is stripped', (): void => {
+    const test = {scripts: {prepare: 'npm run build && husky install'}};
+    const expected = {scripts: {prepare: 'npm run build'}};
     expect(modifyPackageJson(test, '')).toEqual(expected);
   });
 });
