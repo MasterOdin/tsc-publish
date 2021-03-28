@@ -1,6 +1,12 @@
 import {replaceString, modifyPackageJson, getNonSrcFiles, shouldIncludeFile, parseTsConfig} from '../src/utils';
 import { resolve } from 'path';
 
+interface huskyPackage {
+  scripts: {
+    [key: string]: string
+  }
+}
+
 const testCases = [
   ['./dist/index.js', './dist'],
   ['dist/index.js', './dist'],
@@ -8,13 +14,13 @@ const testCases = [
   ['dist/index.js', 'dist'],
 ];
 
-describe.each(testCases)('replaceString', (input, outDir): void => {
+describe.each(testCases)('replaceString', (input: string, outDir: string): void => {
   test(`sets ${input} to index.js for ${outDir}`, (): void => {
     expect(replaceString(input, outDir)).toEqual('index.js');
   });
 });
 
-describe.each(testCases)('modifyPackageJson', (input, outDir): void => {
+describe.each(testCases)('modifyPackageJson', (input: string, outDir: string): void => {
   test(`sets ${input} to index.js for ${outDir}`, (): void => {
     const actual = modifyPackageJson(
       {
@@ -40,28 +46,39 @@ describe('modifyPackageJson', (): void => {
     expect(modifyPackageJson(test, '')).toEqual(expected);
   });
 
-  test('that prepare with only husky is deleted', (): void => {
-    const test = {scripts: {prepare: 'husky install'}};
-    const expected = {scripts: {}};
-    expect(modifyPackageJson(test, '')).toEqual(expected);
-  });
+  describe('stripping husky', () => {
+    describe.each(['prepare', 'postinstall'])('%s', (script: string) => {
+      test(`that ${script} with only husky is deleted`, (): void => {
+        const test: huskyPackage = {scripts: {}};
+        test.scripts[script] = 'husky install';
+        const expected = {scripts: {}};
+        expect(modifyPackageJson(test, '')).toEqual(expected);
+      });
 
-  test('that prepare with leading husky is stripped', (): void => {
-    const test = {scripts: {prepare: 'husky install && npm run build'}};
-    const expected = {scripts: {prepare: 'npm run build'}};
-    expect(modifyPackageJson(test, '')).toEqual(expected);
-  });
+      test('that prepare with leading husky is stripped', (): void => {
+        const test: huskyPackage = {scripts: {}};
+        test.scripts[script] = 'husky install && npm run build';
+        const expected: huskyPackage = {scripts: {}};
+        expected.scripts[script] = 'npm run build';
+        expect(modifyPackageJson(test, '')).toEqual(expected);
+      });
 
-  test('that prepare with husky in middle is stripped', (): void => {
-    const test = {scripts: {prepare: 'npm run action && husky install && npm run build'}};
-    const expected = {scripts: {prepare: 'npm run action && npm run build'}};
-    expect(modifyPackageJson(test, '')).toEqual(expected);
-  });
+      test('that prepare with husky in middle is stripped', (): void => {
+        const test: huskyPackage = {scripts: {}};
+        test.scripts[script] = 'npm run action && husky install && npm run build';
+        const expected: huskyPackage = {scripts: {}};
+        expected.scripts[script] = 'npm run action && npm run build';
+        expect(modifyPackageJson(test, '')).toEqual(expected);
+      });
 
-  test('that prepare with following husky is stripped', (): void => {
-    const test = {scripts: {prepare: 'npm run build && husky install'}};
-    const expected = {scripts: {prepare: 'npm run build'}};
-    expect(modifyPackageJson(test, '')).toEqual(expected);
+      test('that prepare with following husky is stripped', (): void => {
+        const test: huskyPackage = {scripts: {}};
+        test.scripts[script] = 'npm run build && husky install';
+        const expected: huskyPackage = {scripts: {}};
+        expected.scripts[script] = 'npm run build';
+        expect(modifyPackageJson(test, '')).toEqual(expected);
+      });
+    });
   });
 });
 
@@ -98,7 +115,7 @@ const tsconfigs = [
   'tsconfig_comma.json',
   'tsconfig_comments.json',
 ];
-describe.each(tsconfigs)('parseTsConfig', (file): void => {
+describe.each(tsconfigs)('parseTsConfig', (file: string): void => {
   test(`test parsing ${file}`, (): void => {
     expect(parseTsConfig(resolve(__dirname, 'test_files', file))).toBeTruthy();
   });
