@@ -37,7 +37,7 @@
     "@masterodin/eslint-config-typescript": "^3.0.0",
     "@types/jest": "^26.0.0",
     "@types/rimraf": "^3.0.0",
-    "@types/temp": "^0.8.34",
+    "@types/temp": "^0.9.0",
     "@typescript-eslint/eslint-plugin": "^4.11.0",
     "@typescript-eslint/parser": "^4.11.0",
     "codecov": "^3.6.1",
